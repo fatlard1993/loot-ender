@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.RandomizableContainer;
@@ -57,7 +56,7 @@ public final class LootOpening {
 		}
 
 		Container opened = copies.size() == 2
-			? new CompoundContainer(copies.get(0), copies.get(1))
+			? new LootDoubleContainer(copies.get(0), copies.get(1))
 			: copies.get(0);
 
 		player.openMenu(new SimpleMenuProvider(

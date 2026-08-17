@@ -26,25 +26,24 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * disk with no level anywhere in reach; the player standing at the chest is
  * always in the same level as the chest.
  */
-public class PlayerLootContainer extends SimpleContainer {
+public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
 	private final BlockPos pos;
 	private final UUID owner;
 
 	/**
-	 * Told whenever the contents move. SimpleContainer has no listeners, and a
-	 * vault that is never marked dirty is a vault that is never written, so this
-	 * is how a player's half-emptied chest survives a restart.
+	 * The vault this copy belongs to. SimpleContainer has no listeners, so it is
+	 * told directly when the contents move and when the menu closes.
 	 */
-	private final Runnable onChanged;
+	private final LootVault vault;
 
 	/** Vanilla's own container reach, squared below. */
 	private static final double REACH = 8.0;
 
-	public PlayerLootContainer(BlockPos pos, UUID owner, int size, Runnable onChanged) {
+	public PlayerLootContainer(BlockPos pos, UUID owner, int size, LootVault vault) {
 		super(size);
 		this.pos = pos.immutable();
 		this.owner = owner;
-		this.onChanged = onChanged;
+		this.vault = vault;
 	}
 
 	public BlockPos pos() {
@@ -58,7 +57,7 @@ public class PlayerLootContainer extends SimpleContainer {
 	@Override
 	public void setChanged() {
 		super.setChanged();
-		this.onChanged.run();
+		this.vault.setDirty();
 	}
 
 	/**
@@ -86,10 +85,8 @@ public class PlayerLootContainer extends SimpleContainer {
 		super.stopOpen(user);
 		delegate(user, false);
 
-		// Emptiness is the fact worth showing: not that you have been here, but
-		// that there is nothing here for you.
 		if (user.getLivingEntity() instanceof ServerPlayer player) {
-			LootMarks.refresh(player, this.pos, this.isEmpty());
+			this.vault.onClosed(player, this);
 		}
 	}
 

@@ -28,7 +28,9 @@ A chest you have been keeping wheat in is not a loot chest and never becomes one
 
 - **Your roll is stable.** It is seeded from the chest's own seed, your UUID, and the position. Reopening a chest you have not taken from shows the same contents.
 - **Two players get different loot.** Same chest, different rolls, because identical chests read as fake.
+- **You can take, not put.** A copy that accepted items would be a private chest at every dungeon in the world, and a promise to remember an inventory per player per chest forever. Taking is all these are for.
 - **Half-emptied chests persist.** Leave three things behind, come back next week, they are still there. Yours.
+- **Emptied ones stop being inventories.** Once a copy runs out it is thrown away and only the position is kept, because the one question left about it has the answer no. Since copies only ever shrink, that is where nearly all of them end up: one number instead of 27 slots.
 - **Double chests behave.** Two copies joined into one 54-slot menu, in the same order vanilla uses, so it does not matter which half you clicked.
 - **Breaking the chest ends it.** Every player's copy of that position is dropped, so nothing outlives the block or attaches itself to whatever is built there next.
 - **You cannot walk away and keep looting.** The copy closes at the same range a real chest would.
@@ -56,7 +58,10 @@ Install server-side alongside its declared dependencies (see `fabric.mod.json`);
 | `LootVault.java` | Everyone's copies, the per-player roll, and persistence |
 | `PlayerLootContainer.java` | One copy; lid delegation, reach, and the spent mark |
 | `LootMarks.java` | The darkened clasp, via Pandorical |
-| `LootContainerOpenMixin.java` | The one interception, on the block's own use method |
+| `TakeOnly.java` | Marks a container as take-only; both copy shapes carry it |
+| `LootDoubleContainer.java` | The two halves of a double chest, joined and recognisable |
+| `LootContainerOpenMixin.java` | Opens the player's copy, on the block's own use method |
+| `LootSlotMixin.java` | Refuses to let anything be put into a copy |
 
 ## Building
 

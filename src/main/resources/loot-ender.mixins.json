@@ -3,7 +3,8 @@
 	"package": "justfatlard.loot_ender.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"LootContainerOpenMixin"
+		"LootContainerOpenMixin",
+		"LootSlotMixin"
 	],
 	"client": [],
 	"injectors": {
