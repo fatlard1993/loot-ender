@@ -27,5 +27,8 @@
 	},
 	"mixins": [
 		"loot-ender.mixins.json"
-	]
+	],
+	"suggests": {
+		"block-tip": "*"
+	}
 }

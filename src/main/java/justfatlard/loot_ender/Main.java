@@ -14,6 +14,11 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+      // Guarded class load: the tip registration names block-tip types.
+      if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("block-tip")) {
+         justfatlard.loot_ender.LootTips.register();
+      }
+
 		// The client keeps no marks across a reconnect, so a join states them all
 		// rather than trusting what it still has.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->

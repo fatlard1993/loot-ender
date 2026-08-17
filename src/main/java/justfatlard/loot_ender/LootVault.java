@@ -118,6 +118,18 @@ public final class LootVault extends SavedData {
 		LootMarks.refresh(player, container.pos(), empty);
 	}
 
+	/**
+	 * Whether this one particular chest is spent for this player.
+	 *
+	 * <p>A set lookup, because block-tip asks this every time somebody looks at a
+	 * chest and walking the whole list to answer would scale with how much of the
+	 * world they had already looted.
+	 */
+	public boolean isSpent(UUID player, BlockPos pos) {
+		Set<Long> mine = this.spent.get(player);
+		return mine != null && mine.contains(pos.asLong());
+	}
+
 	/** Every chest this player has already emptied, for restating marks on a join. */
 	public List<BlockPos> spentFor(UUID player) {
 		Set<Long> mine = this.spent.get(player);
