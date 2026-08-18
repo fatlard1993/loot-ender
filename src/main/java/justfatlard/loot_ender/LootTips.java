@@ -23,7 +23,7 @@ public final class LootTips {
 			if (!(level instanceof ServerLevel serverLevel)) return null;
 
 			return LootVault.get(serverLevel).isSpent(player.getUUID(), pos)
-				? "You have taken everything in this one"
+				? "Emptied"
 				: null;
 		});
 	}
