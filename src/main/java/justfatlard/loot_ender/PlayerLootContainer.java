@@ -2,6 +2,7 @@ package justfatlard.loot_ender;
 
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -93,15 +94,13 @@ public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
 	/** Move the real chest's lid, so a chest that opens looks like a chest that opened. */
 	private void delegate(ContainerUser user, boolean opening) {
 		LivingEntity entity = user.getLivingEntity();
-		if (entity == null) return;
+		if (entity == null || !(entity.level() instanceof ServerLevel level)) return;
 
-		BlockEntity blockEntity = entity.level().getBlockEntity(this.pos);
-		if (!(blockEntity instanceof Container real)) return;
-
+		// Not the block's own startOpen/stopOpen: see LootLid for what that did.
 		if (opening) {
-			real.startOpen(user);
+			LootLid.opened(level, this.pos);
 		} else {
-			real.stopOpen(user);
+			LootLid.closed(level, this.pos);
 		}
 	}
 }
