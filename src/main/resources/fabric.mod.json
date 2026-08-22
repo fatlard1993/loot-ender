@@ -18,6 +18,7 @@
 			"justfatlard.loot_ender.Main"
 		]
 	},
+	"icon": "assets/loot-ender/icon.png",
 	"depends": {
 		"fabricloader": ">=0.19.3",
 		"fabric-api": "*",
