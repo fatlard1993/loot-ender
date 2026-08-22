@@ -1,6 +1,9 @@
 package justfatlard.loot_ender;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.minecraft.core.BlockPos;
+import java.util.List;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +17,11 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		// The clasps are this mod's own art, and this mod is not on anybody's client. Pandorical
+		// carries them over on connect and reloads resources afterwards, which is what gets them
+		// into the chest atlas the renderer samples.
+		justfatlard.pandorical.api.PandoricalApi.content().registerModAssets(MOD_ID);
+
       // Guarded class load: the tip registration names block-tip types.
       if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("block-tip")) {
          justfatlard.loot_ender.LootTips.register();
@@ -31,9 +39,26 @@ public class Main implements ModInitializer {
 			if (level instanceof ServerLevel serverLevel) {
 				LootVault vault = LootVault.get(serverLevel);
 				vault.forget(pos);
+				LootIndex.forget(serverLevel, pos);
 				for (ServerPlayer online : serverLevel.players()) {
-					LootMarks.refresh(online, pos, false);
+					// Unmarked, not marked unopened: there is no chest here to open.
+					LootMarks.gone(online, pos);
 				}
+			}
+		});
+
+		// A loot chest has to be recognisable before anybody opens it, and until its chunk
+		// arrives nothing on the server knows it exists. This is the moment it becomes
+		// knowable, so it is the moment the gold clasp can be handed out.
+		ServerChunkEvents.CHUNK_LOAD.register((serverLevel, chunk, newlyGenerated) -> {
+			List<BlockPos> fresh = LootIndex.noticed(serverLevel, chunk);
+			if (fresh.isEmpty()) return;
+
+			LootVault vault = LootVault.get(serverLevel);
+			for (ServerPlayer online : serverLevel.players()) {
+				LootMarks.noticed(online, fresh.stream()
+					.filter(pos -> !vault.isSpent(online.getUUID(), pos))
+					.toList());
 			}
 		});
 

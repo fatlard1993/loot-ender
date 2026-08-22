@@ -92,6 +92,17 @@ public final class LootOpening {
 	}
 
 	/** The container at this position if it is still holding an unrolled loot table. */
+	/**
+	 * Whether this block is one of ours: a container still carrying an unrolled loot table.
+	 *
+	 * <p>Reads the table off the block entity rather than reaching for its contents. Asking a
+	 * randomizable container what is in it is what rolls the table, and a tip is drawn four times
+	 * a second at anything a player happens to look at.
+	 */
+	public static boolean isLootContainer(ServerLevel level, BlockPos pos) {
+		return lootContainer(level, pos) != null;
+	}
+
 	private static RandomizableContainer lootContainer(ServerLevel level, BlockPos pos) {
 		BlockEntity blockEntity = level.getBlockEntity(pos);
 		if (!(blockEntity instanceof RandomizableContainer container)) return null;
