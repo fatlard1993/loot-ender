@@ -49,16 +49,17 @@ public class Main implements ModInitializer {
 
 		// A loot chest has to be recognisable before anybody opens it, and until its chunk
 		// arrives nothing on the server knows it exists. This is the moment it becomes
-		// knowable, so it is the moment the gold clasp can be handed out.
+		// knowable, so it is the moment both clasps are handed out - the dark one included,
+		// because a chest this player already emptied is still a thing they need told.
 		ServerChunkEvents.CHUNK_LOAD.register((serverLevel, chunk, newlyGenerated) -> {
 			List<BlockPos> fresh = LootIndex.noticed(serverLevel, chunk);
 			if (fresh.isEmpty()) return;
 
 			LootVault vault = LootVault.get(serverLevel);
 			for (ServerPlayer online : serverLevel.players()) {
-				LootMarks.noticed(online, fresh.stream()
-					.filter(pos -> !vault.isSpent(online.getUUID(), pos))
-					.toList());
+				LootMarks.noticed(online,
+					fresh.stream().filter(pos -> vault.isSpent(online.getUUID(), pos)).toList(),
+					fresh.stream().filter(pos -> !vault.isSpent(online.getUUID(), pos)).toList());
 			}
 		});
 

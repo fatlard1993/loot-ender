@@ -49,13 +49,22 @@ public final class LootMarks {
 	 * no mark at all is how an ordinary chest looks.
 	 */
 	public static void refresh(ServerPlayer player, BlockPos pos, boolean spent) {
+		// Unmarked first, because add() leaves existing marks in place: swapping without this
+		// leaves the chest carrying both clasps at once and the client picks whichever it likes.
+		PandoricalApi.chestOverlays().remove(player, List.of(pos));
 		PandoricalApi.chestOverlays().add(player, spent ? LOOTED : SEALED, List.of(pos));
 	}
 
-	/** Newly loaded loot chests, for everyone who might be looking at them. */
-	public static void noticed(ServerPlayer player, List<BlockPos> positions) {
-		if (positions.isEmpty()) return;
-		PandoricalApi.chestOverlays().add(player, SEALED, positions);
+	/**
+	 * Newly loaded loot chests, each to the clasp that fits this player.
+	 *
+	 * <p>Both marks, not just the gold one. A chunk that unloads takes its marks with it, so a
+	 * chest the player had already emptied came back wearing no clasp at all - which is exactly
+	 * how an ordinary chest looks, and so read as a chest still worth opening.
+	 */
+	public static void noticed(ServerPlayer player, List<BlockPos> spent, List<BlockPos> unspent) {
+		if (!spent.isEmpty()) PandoricalApi.chestOverlays().add(player, LOOTED, spent);
+		if (!unspent.isEmpty()) PandoricalApi.chestOverlays().add(player, SEALED, unspent);
 	}
 
 	/** A chest that has stopped being one. */
