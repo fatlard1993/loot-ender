@@ -59,6 +59,12 @@ public final class LootOpening {
 			? new LootDoubleContainer(copies.get(0), copies.get(1))
 			: copies.get(0);
 
+		// chest-utils, if it is here, for the take-the-lot and top-off buttons.
+		if (justfatlard.loot_ender.integration.ChestUtilsScreen.show(
+				player, opened, TITLE, copies.size() == 2 ? 6 : 3)) {
+			return InteractionResult.SUCCESS;
+		}
+
 		player.openMenu(new SimpleMenuProvider(
 			(syncId, inventory, opener) -> copies.size() == 2
 				? ChestMenu.sixRows(syncId, inventory, opened)
@@ -88,6 +94,10 @@ public final class LootOpening {
 
 		PlayerLootContainer copy = LootVault.get(level)
 			.copyForVehicle(level, player, id, where, table, cart.getContainerLootTableSeed());
+
+		if (justfatlard.loot_ender.integration.ChestUtilsScreen.show(player, copy, TITLE, 3)) {
+			return InteractionResult.SUCCESS;
+		}
 
 		player.openMenu(new SimpleMenuProvider(
 			(syncId, inventory, opener) -> ChestMenu.threeRows(syncId, inventory, copy), TITLE));
