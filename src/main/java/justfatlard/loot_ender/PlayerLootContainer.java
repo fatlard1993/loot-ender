@@ -32,6 +32,18 @@ public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
 	private final UUID owner;
 
 	/**
+	 * What the vault files this copy under.
+	 *
+	 * <p>The same as the packed position for a chest in the ground, which is what it was when
+	 * that was the only kind. A chest minecart rolls away from wherever it was opened, so it is
+	 * filed under its own identity instead and this stops being a position at all.
+	 */
+	private final long key;
+
+	/** Whether this copy has a clasp on a block somewhere. A cart has no block to mark. */
+	private final boolean marked;
+
+	/**
 	 * The vault this copy belongs to. SimpleContainer has no listeners, so it is
 	 * told directly when the contents move and when the menu closes.
 	 */
@@ -41,14 +53,29 @@ public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
 	private static final double REACH = 8.0;
 
 	public PlayerLootContainer(BlockPos pos, UUID owner, int size, LootVault vault) {
+		this(pos.asLong(), pos, owner, size, vault, true);
+	}
+
+	public PlayerLootContainer(long key, BlockPos pos, UUID owner, int size, LootVault vault,
+			boolean marked) {
 		super(size);
+		this.key = key;
 		this.pos = pos.immutable();
 		this.owner = owner;
 		this.vault = vault;
+		this.marked = marked;
 	}
 
 	public BlockPos pos() {
 		return this.pos;
+	}
+
+	public long key() {
+		return this.key;
+	}
+
+	public boolean marked() {
+		return this.marked;
 	}
 
 	public UUID owner() {

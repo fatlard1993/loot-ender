@@ -102,6 +102,37 @@ public final class LootVault extends SavedData {
 	}
 
 	/**
+	 * This player's copy of a chest minecart, rolled on the first ask.
+	 *
+	 * <p>Filed under the cart's own identity rather than where it happens to be sitting. A cart
+	 * is pushed, and a copy keyed to a position would roll fresh loot every time it moved - the
+	 * one thing this mod exists to stop.
+	 *
+	 * <p>Shares the position keyspace on purpose: the packed form of a cart's UUID decodes to a
+	 * height no block can occupy, so it cannot collide with a real chest, and nothing about the
+	 * stored shape has to change to hold it.
+	 */
+	public PlayerLootContainer copyForVehicle(ServerLevel level, ServerPlayer player, UUID cart,
+			BlockPos where, ResourceKey<LootTable> table, long seed) {
+		UUID id = player.getUUID();
+		long key = cart.getLeastSignificantBits();
+
+		if (this.spent.getOrDefault(id, Set.of()).contains(key)) {
+			return new PlayerLootContainer(key, where, id, SLOTS, this, false);
+		}
+
+		Map<Long, PlayerLootContainer> mine = this.copies.computeIfAbsent(id, k -> new HashMap<>());
+		PlayerLootContainer existing = mine.get(key);
+		if (existing != null) return existing;
+
+		PlayerLootContainer container = new PlayerLootContainer(key, where, id, SLOTS, this, false);
+		fill(level, player, where, container, table, seed);
+		mine.put(key, container);
+		this.setDirty();
+		return container;
+	}
+
+	/**
 	 * Called when a player shuts one of their copies. An empty one stops being an
 	 * inventory and becomes a position.
 	 */
@@ -109,13 +140,15 @@ public final class LootVault extends SavedData {
 		boolean empty = container.isEmpty();
 		if (empty) {
 			Map<Long, PlayerLootContainer> mine = this.copies.get(container.owner());
-			if (mine != null) mine.remove(container.pos().asLong());
+			if (mine != null) mine.remove(container.key());
 			this.spent.computeIfAbsent(container.owner(), key -> new HashSet<>())
-				.add(container.pos().asLong());
+				.add(container.key());
 			this.setDirty();
 		}
 
-		LootMarks.refresh(player, container.pos(), empty);
+		// A cart has no block to put a clasp on, and the position it was opened at is not
+		// where it will be next time anyway.
+		if (container.marked()) LootMarks.refresh(player, container.pos(), empty);
 	}
 
 	/**

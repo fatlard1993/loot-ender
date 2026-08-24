@@ -69,6 +69,33 @@ public final class LootOpening {
 	}
 
 	/**
+	 * The same, for a chest minecart.
+	 *
+	 * <p>A cart is an entity, so none of the block machinery above reaches it: the loot table
+	 * hangs off the vehicle and vanilla unpacks it into the cart itself the moment anybody
+	 * looks inside. First one down a mineshaft took the lot, which is the whole thing this mod
+	 * exists to stop, and it read as loot-ender simply not being installed.
+	 *
+	 * <p>Three rows, always. A cart has no double form to account for.
+	 */
+	public static InteractionResult tryOpenVehicle(ServerLevel level, ServerPlayer player,
+			net.minecraft.world.entity.vehicle.ContainerEntity cart, java.util.UUID id,
+			BlockPos where) {
+		if (player.isSpectator()) return null;
+
+		ResourceKey<LootTable> table = cart.getContainerLootTable();
+		if (table == null) return null;
+
+		PlayerLootContainer copy = LootVault.get(level)
+			.copyForVehicle(level, player, id, where, table, cart.getContainerLootTableSeed());
+
+		player.openMenu(new SimpleMenuProvider(
+			(syncId, inventory, opener) -> ChestMenu.threeRows(syncId, inventory, copy), TITLE));
+
+		return InteractionResult.SUCCESS;
+	}
+
+	/**
 	 * The block positions this container is made of: one, or two for a double
 	 * chest. Empty when we should not be involved.
 	 */

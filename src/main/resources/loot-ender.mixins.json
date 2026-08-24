@@ -1,13 +1,14 @@
 {
-	"required": true,
-	"package": "justfatlard.loot_ender.mixin",
-	"compatibilityLevel": "JAVA_25",
-	"mixins": [
-		"LootContainerOpenMixin",
-		"LootSlotMixin"
-	],
-	"client": [],
-	"injectors": {
-		"defaultRequire": 1
-	}
+  "required": true,
+  "package": "justfatlard.loot_ender.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "LootContainerOpenMixin",
+    "LootSlotMixin",
+    "LootVehicleOpenMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
