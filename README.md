@@ -22,6 +22,8 @@ That mark is drawn by Pandorical. A client without it sees ordinary chests every
 
 A chest or barrel that still carries an unrolled loot table, which is how the game ships every naturally generated one.
 
+**A chest minecart too.** The one in a mineshaft is the same promise in a different shape, and arriving second at one is the same disappointment. A cart is an entity rather than a block, its table hangs off the vehicle, and vanilla unpacks it on the first look - so it takes its own handling, but from the outside it behaves exactly like the chest in the ground.
+
 A chest you have been keeping wheat in is not a loot chest and never becomes one. Neither is a double chest with a table on only one half, which is a shape this mod does not claim to understand: both fall through to vanilla, untouched. Refusing the cases it is unsure of is the whole safety story, because the worst thing it could do is stand between you and an ordinary chest.
 
 ## Details Worth Knowing
@@ -38,6 +40,12 @@ A chest you have been keeping wheat in is not a loot chest and never becomes one
 ### A known edge
 
 A comparator or hopper reading an unopened loot chest makes vanilla unpack it on the spot, which is vanilla's behaviour and predates this mod. If that happens the chest becomes an ordinary one holding a single rolled batch, shared, exactly as it would without this installed. It needs someone to have deliberately placed the comparator, so it has not come up.
+
+## Chest Utils
+
+Where [Chest Utils](https://github.com/fatlard1993/chest-utils) is installed, your copy opens on its screen instead of the plain one, and picks up the two buttons that make sense for something you can only take from: **take the lot**, and **top off** the part-used stacks you are already carrying.
+
+Neither mod knows how the other builds a screen. Chest Utils exposes a take-only screen for any container; this mod hands over a copy and gets the buttons for free. Without it, copies open on the ordinary chest screen and nothing else changes.
 
 ## Pandorical
 
@@ -61,6 +69,8 @@ Install server-side alongside its declared dependencies (see `fabric.mod.json`);
 | `TakeOnly.java` | Marks a container as take-only; both copy shapes carry it |
 | `LootDoubleContainer.java` | The two halves of a double chest, joined and recognisable |
 | `LootContainerOpenMixin.java` | Opens the player's copy, on the block's own use method |
+| `LootVehicleOpenMixin.java` | The same, for a chest minecart, which is an entity and unpacks differently |
+| `integration/ChestUtilsScreen.java` | Showing a copy through Chest Utils, when it is installed |
 | `LootSlotMixin.java` | Refuses to let anything be put into a copy |
 
 ## Building
