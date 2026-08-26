@@ -2,6 +2,7 @@ package justfatlard.loot_ender;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.core.BlockPos;
 import java.util.List;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -31,6 +32,15 @@ public class Main implements ModInitializer {
 		// rather than trusting what it still has.
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 			LootMarks.restate(handler.getPlayer()));
+
+		// A lid is held open by a tally that lives in this process, so both ways of leaving
+		// without shutting one have to be swept: the player who disconnects mid-screen, and
+		// the process itself. A barrel is the one that cannot forgive being missed - its open
+		// state is written to the world and outlives the tally that set it.
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+			LootLid.left(server, handler.getPlayer().getUUID()));
+
+		ServerLifecycleEvents.SERVER_STOPPING.register(LootLid::shutDown);
 
 		// A broken chest takes everyone's copy with it. Without this the copies
 		// would outlive the block and hand their contents back to whatever got
