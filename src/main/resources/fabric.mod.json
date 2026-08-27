@@ -30,6 +30,7 @@
 		"loot-ender.mixins.json"
 	],
 	"suggests": {
-		"block-tip": "*"
+		"block-tip": "*",
+		"chest-utils": "*"
 	}
 }
