@@ -125,9 +125,9 @@ public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
 
 		// Not the block's own startOpen/stopOpen: see LootLid for what that did.
 		if (opening) {
-			LootLid.opened(level, this.pos);
+			LootLid.opened(level, this.pos, entity.getUUID());
 		} else {
-			LootLid.closed(level, this.pos);
+			LootLid.closed(level, this.pos, entity.getUUID());
 		}
 	}
 }
