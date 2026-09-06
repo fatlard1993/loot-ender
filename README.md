@@ -41,6 +41,92 @@ A chest you have been keeping wheat in is not a loot chest and never becomes one
 
 A comparator or hopper reading an unopened loot chest makes vanilla unpack it on the spot, which is vanilla's behaviour and predates this mod. If that happens the chest becomes an ordinary one holding a single rolled batch, shared, exactly as it would without this installed. It needs someone to have deliberately placed the comparator, so it has not come up.
 
+## Locks
+
+Off by default for nobody: it ships on, and an op turns it off from the Loot Ender page of the
+mod menu, or in `config/loot-ender.properties`. With it
+on, a loot chest may be locked, and your copy does not open until you have picked it.
+
+**Per player, like everything else here.** Your lock is yours. The first person through does not
+leave the door open behind them, because this mod exists on the premise that arriving second
+costs nothing and earns nothing, and a chest somebody else already picked would be a chest that
+rewarded arriving second.
+
+**Not every chest.** The good tables are always locked - strongholds, mansions, end cities,
+bastions, ancient cities, trial chambers. The ordinary ones roll for it, at a chance you can set,
+so a lock stays a sign the chest is worth something rather than a toll on every barrel in a
+mineshaft. Whether a given chest has a lock is decided from the chest itself, so the answer never
+changes between visits.
+
+**Four grades**, by what the chest is worth: simple, sturdy, intricate, masterwork. A better lock
+has more notches to search and less room for error, and snaps picks harder.
+
+### Picking one
+
+By hand, in real time. The pick follows your mouse round the keyhole; hold the mouse button, or
+space, to turn.
+
+1. **Set the pick** by moving the mouse. It cannot move while you are turning.
+2. **Turn.** The cylinder goes as far as the pick's position lets it: all the way on the answer
+   and the lock opens, most of the way beside it, less the further out you are.
+3. **Read how far it went** before it jammed. That is the only readout there is, and working the
+   answer out from it is the game.
+
+A pick held against a jam trembles, and after a moment snaps: a couple of seconds of forcing a
+bad angle on a simple lock, under one on a masterwork. Let go before then and it survives, most
+of the strain going with your hand. Nothing else is ever lost: the lock keeps its answer between
+attempts, so what a snapped pick taught you is still true on the next one. Run out of picks and
+the chest stays shut until you bring more.
+
+The pick's motion is the client's, so it never waits on the server; the answer, the cylinder and
+the pick's wear are the server's, so they never leave it. On a bad connection the cylinder is
+late rather than the game wrong.
+
+### Lockpicks
+
+Three sources, because one source for the only key in the game is a wall:
+
+- **Crafted** from a single iron nugget, so nobody is ever truly stuck.
+- **Dropped** by zombies and skeletons killed by a player, rarely, and more often with Looting.
+- **Found** in the ordinary chests - village houses and smithies, shipwreck supplies - which are
+  the ones most likely to be unlocked. Putting the key inside the locked box is the oldest mistake
+  in the genre.
+
+### Player-locked chests
+
+With [Chest Utils](https://github.com/fatlard/chest-utils) installed, a chest can carry a
+player's own lock. Whether lockpicking may do anything about that is its own setting, and it
+ships as **never**: a player's lock is a player's lock, and a server that wants otherwise should
+have said so on purpose.
+
+- **never** - unchanged. Somebody else's locked chest refuses the way it always did.
+- **absent** - pickable only once *everybody* the lock lets in, owner and shared alike, has been
+  away for `player_lock_absent_days`. For reclaiming the base of a player who is not coming back,
+  without touching the chests of one who is. Absence is read from when a player's save file was
+  last written, which is every logout and every autosave, so it knows about players who left long
+  before this feature existed.
+- **always** - any player-locked chest can be picked by anyone carrying picks. Locks become a
+  delay rather than a claim. It suits a server that wants theft possible but expensive, and it
+  will surprise anybody who locked a chest expecting otherwise.
+
+A player lock is always a **masterwork** lock, whatever the chest is made of: a claim somebody
+made deliberately should cost more to break than a dungeon that left one lying around.
+
+Two things a player lock does *not* share with a loot chest's. It is never remembered, so every
+entry costs picks - a lock beaten once in March should not still be open in December. And it
+draws a fresh answer each time it is opened rather than keeping one, because it is a standing
+defence and not a one-off obstacle. Whoever picks it is told whose chest it is before they start.
+
+Picking opens the chest. It does not let anyone break it, and it hands over Chest Utils' plain
+screen rather than the one carrying the lock controls, so nobody relocks a chest they picked
+their way into.
+
+### A client without Pandorical
+
+Gets no locks at all. The lock is drawn through Pandorical's screens, and locking a player out of
+a chest they have no way to open would be worse than not locking it: those chests open the way
+they always did.
+
 ## Chest Utils
 
 Where [Chest Utils](https://github.com/fatlard1993/chest-utils) is installed, your copy opens on its screen instead of the plain one, and picks up the two buttons that make sense for something you can only take from: **take the lot**, and **top off** the part-used stacks you are already carrying.
@@ -49,39 +135,13 @@ Neither mod knows how the other builds a screen. Chest Utils exposes a take-only
 
 ## Pandorical
 
-Loot Ender runs server-side, and Pandorical is a hard dependency (`fabric.mod.json`): the server will not load this mod without it. It is used for one thing, the darkened clasp on a chest you have emptied, drawn through Pandorical's chest overlay API.
+Loot Ender runs server-side, and Pandorical is required: the server will not load this mod without it. It is used for two things: the darkened clasp on a chest you have emptied, drawn through Pandorical's chest overlay API, and the lock screen when lockpicking is on.
 
 No Loot Ender jar is needed on a client.
 
-## Installation
+## Development
 
-Install server-side alongside its declared dependencies (see `fabric.mod.json`); connecting clients need only Pandorical. Version targets live in `gradle.properties` (Minecraft, loader, Fabric API) and `fabric.mod.json` (Java).
-
-## Key Files
-
-| File | Responsibility |
-|------|---------------|
-| `Main.java` | Entry point; join sync and block-break cleanup |
-| `LootOpening.java` | Decides whether a container is ours, and opens the right copy |
-| `LootVault.java` | Everyone's copies, the per-player roll, and persistence |
-| `PlayerLootContainer.java` | One copy; lid delegation, reach, and the spent mark |
-| `LootMarks.java` | The darkened clasp, via Pandorical |
-| `TakeOnly.java` | Marks a container as take-only; both copy shapes carry it |
-| `LootDoubleContainer.java` | The two halves of a double chest, joined and recognisable |
-| `LootContainerOpenMixin.java` | Opens the player's copy, on the block's own use method |
-| `LootVehicleOpenMixin.java` | The same, for a chest minecart, which is an entity and unpacks differently |
-| `integration/ChestUtilsScreen.java` | Showing a copy through Chest Utils, when it is installed |
-| `LootSlotMixin.java` | Refuses to let anything be put into a copy |
-
-## Building
-
-Loot Ender builds against Pandorical's live source, not a published artifact: `settings.gradle` includes `../pandorical`. Check both out side by side or the build fails before it starts.
-
-```bash
-./gradlew build
-```
-
-The built jar will be in `build/libs/`.
+Installing, building and the map of the source are in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## License
 

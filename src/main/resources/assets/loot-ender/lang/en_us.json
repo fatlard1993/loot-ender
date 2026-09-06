@@ -1,0 +1,16 @@
+{
+	"item.loot-ender.lockpick": "Lockpick",
+	"loot-ender.lock.simple": "Simple Lock",
+	"loot-ender.lock.sturdy": "Sturdy Lock",
+	"loot-ender.lock.intricate": "Intricate Lock",
+	"loot-ender.lock.masterwork": "Masterwork Lock",
+	"loot-ender.lock.turn": "Turn",
+	"loot-ender.lock.picks": "Picks left:",
+	"loot-ender.lock.hint": "Move the mouse to work the pick round. Hold the button, or space, to turn: the nearer the pick, the further it goes. Forced against a jam, it snaps.",
+	"loot-ender.lock.no_picks": "This chest is locked, and you have nothing to pick it with.",
+	"loot-ender.lock.out_of_picks": "Your last pick snapped.",
+	"loot-ender.lock.picking_claim": "Picking %s's lock.",
+	"loot-ender.lock.left": "Left",
+	"loot-ender.lock.right": "Right",
+	"loot-ender.lock.leave": "Leave"
+}

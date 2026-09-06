@@ -44,12 +44,37 @@ public final class LootOpening {
 		List<BlockPos> parts = parts(level, state, pos);
 		if (parts.isEmpty()) return null;
 
+		// The lock is answered before the loot is, and it is answered once for a double chest:
+		// keyed to the front half, so it does not matter which side was clicked and there is
+		// never a second lock waiting behind the first.
+		RandomizableContainer front = lootContainer(level, parts.get(0));
+		if (front == null || front.getLootTable() == null) return null;
+
+		if (!justfatlard.loot_ender.lock.Lockpicking.unlocked(level, player, parts.get(0),
+				parts.get(0).asLong(), front.getLootTable(), front.getLootTableSeed(),
+				picked -> showCopies(level, picked, parts))) {
+			return InteractionResult.SUCCESS;
+		}
+
+		return showCopies(level, player, parts) ? InteractionResult.SUCCESS : null;
+	}
+
+	/**
+	 * Opens this player's copies of these parts.
+	 *
+	 * <p>Split out because it also runs later, once a lock has been picked, by which time the
+	 * chest may not be there any more: a caller who has walked away from a false answer here is
+	 * a caller who mined the block while the lock screen was up.
+	 *
+	 * @return false when this is no longer something we should be involved in
+	 */
+	private static boolean showCopies(ServerLevel level, ServerPlayer player, List<BlockPos> parts) {
 		LootVault vault = LootVault.get(level);
 		List<Container> copies = new ArrayList<>(parts.size());
 		for (BlockPos part : parts) {
 			RandomizableContainer container = lootContainer(level, part);
 			// Checked again per part: parts() only told us the shape.
-			if (container == null || container.getLootTable() == null) return null;
+			if (container == null || container.getLootTable() == null) return false;
 
 			ResourceKey<LootTable> table = container.getLootTable();
 			copies.add(vault.copyFor(level, player, part, table, container.getLootTableSeed()));
@@ -62,7 +87,7 @@ public final class LootOpening {
 		// chest-utils, if it is here, for the take-the-lot and top-off buttons.
 		if (justfatlard.loot_ender.integration.ChestUtilsScreen.show(
 				player, opened, TITLE, copies.size() == 2 ? 6 : 3)) {
-			return InteractionResult.SUCCESS;
+			return true;
 		}
 
 		player.openMenu(new SimpleMenuProvider(
@@ -71,7 +96,7 @@ public final class LootOpening {
 				: ChestMenu.threeRows(syncId, inventory, opened),
 			TITLE));
 
-		return InteractionResult.SUCCESS;
+		return true;
 	}
 
 	/**
@@ -92,17 +117,32 @@ public final class LootOpening {
 		ResourceKey<LootTable> table = cart.getContainerLootTable();
 		if (table == null) return null;
 
+		if (!justfatlard.loot_ender.lock.Lockpicking.unlocked(level, player, where,
+				id.getLeastSignificantBits(), table, cart.getContainerLootTableSeed(),
+				picked -> showVehicleCopy(level, picked, cart, id, where))) {
+			return InteractionResult.SUCCESS;
+		}
+
+		return showVehicleCopy(level, player, cart, id, where) ? InteractionResult.SUCCESS : null;
+	}
+
+	private static boolean showVehicleCopy(ServerLevel level, ServerPlayer player,
+			net.minecraft.world.entity.vehicle.ContainerEntity cart, java.util.UUID id,
+			BlockPos where) {
+		ResourceKey<LootTable> table = cart.getContainerLootTable();
+		if (table == null) return false;
+
 		PlayerLootContainer copy = LootVault.get(level)
 			.copyForVehicle(level, player, id, where, table, cart.getContainerLootTableSeed());
 
 		if (justfatlard.loot_ender.integration.ChestUtilsScreen.show(player, copy, TITLE, 3)) {
-			return InteractionResult.SUCCESS;
+			return true;
 		}
 
 		player.openMenu(new SimpleMenuProvider(
 			(syncId, inventory, opener) -> ChestMenu.threeRows(syncId, inventory, copy), TITLE));
 
-		return InteractionResult.SUCCESS;
+		return true;
 	}
 
 	/**

@@ -18,6 +18,15 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		LootEnderConfig.load();
+		if (justfatlard.pandorical.api.PandoricalApi.isAvailable()) LootEnderConfig.menu();
+		LootEnderItems.register();
+
+		// Registered whatever the config says, so that turning lockpicking on does not need a
+		// restart to make the screen answer, and turning it off leaves no half-wired handler.
+		justfatlard.loot_ender.lock.Lockpicking.registerHandlers();
+		justfatlard.loot_ender.lock.LockpickLoot.register();
+
 		// The clasps are this mod's own art, and this mod is not on anybody's client. Pandorical
 		// carries them over on connect and reloads resources afterwards, which is what gets them
 		// into the chest atlas the renderer samples.
@@ -28,10 +37,10 @@ public class Main implements ModInitializer {
          justfatlard.loot_ender.LootTips.register();
       }
 
-		// The client keeps no marks across a reconnect, so a join states them all
-		// rather than trusting what it still has.
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-			LootMarks.restate(handler.getPlayer()));
+		// The client keeps no marks across a reconnect, so state them all - on Pandorical's
+		// ready moment, not Fabric's JOIN, which fires before the capability handshake and
+		// had every one of these silently dropped.
+		justfatlard.pandorical.api.PandoricalApi.onPlayerReady(LootMarks::restate);
 
 		// A lid is held open by a tally that lives in this process, so both ways of leaving
 		// without shutting one have to be swept: the player who disconnects mid-screen, and
@@ -49,6 +58,7 @@ public class Main implements ModInitializer {
 			if (level instanceof ServerLevel serverLevel) {
 				LootVault vault = LootVault.get(serverLevel);
 				vault.forget(pos);
+				justfatlard.loot_ender.lock.LockVault.get(serverLevel).forget(pos);
 				LootIndex.forget(serverLevel, pos);
 				for (ServerPlayer online : serverLevel.players()) {
 					// Unmarked, not marked unopened: there is no chest here to open.

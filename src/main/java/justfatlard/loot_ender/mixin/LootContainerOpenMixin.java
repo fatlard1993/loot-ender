@@ -35,6 +35,16 @@ public class LootContainerOpenMixin {
 		if (level.isClientSide() || !(player instanceof ServerPlayer serverPlayer)) return;
 
 		InteractionResult result = LootOpening.tryOpen((ServerLevel) level, serverPlayer, state, pos);
-		if (result != null) cir.setReturnValue(result);
+		if (result != null) {
+			cir.setReturnValue(result);
+			return;
+		}
+
+		// Not a loot chest, so it may be somebody's own. Asked here rather than in chest-utils
+		// because this injection runs first: chest-utils yields to whoever already answered, and
+		// its refusal is exactly what a pickable lock has to get in front of.
+		InteractionResult picked = justfatlard.loot_ender.lock.PlayerLocks.tryPick(
+			(ServerLevel) level, serverPlayer, state, pos);
+		if (picked != null) cir.setReturnValue(picked);
 	}
 }
