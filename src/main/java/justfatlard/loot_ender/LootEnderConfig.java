@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import justfatlard.loot_ender.lock.LockDifficulty;
 import net.fabricmc.loader.api.FabricLoader;
 
 /** File-backed settings, read once at startup. */
@@ -14,6 +15,7 @@ public final class LootEnderConfig {
 		FabricLoader.getInstance().getConfigDir().resolve("loot-ender.properties");
 
 	private static boolean lockpicking = true;
+	private static LockDifficulty lockDifficulty = LockDifficulty.NORMAL;
 	private static float commonLockChance = 0.35F;
 	private static float lockpickDropChance = 0.05F;
 	private static PlayerLocks playerLocks = PlayerLocks.NEVER;
@@ -38,6 +40,12 @@ public final class LootEnderConfig {
 			# dropping and stop appearing in loot, and any you are already carrying
 			# stay in your inventory doing nothing.
 			lockpicking=true
+
+			# How hard locks are to pick: easiest, easy, normal or hard. Easier widens
+			# the spot that turns the lock and wears picks slower; easiest also makes
+			# the cylinder show more plainly how near the pick is. An op can set it for
+			# one player with /lockpicking difficulty player <name> <level>.
+			lock_difficulty=normal
 
 			# Chance that a chest from a common loot table carries a lock at all.
 			# The better tables (strongholds, mansions, end cities and the like) are
@@ -85,6 +93,7 @@ public final class LootEnderConfig {
 		}
 
 		lockpicking = bool(props, "lockpicking", lockpicking);
+		lockDifficulty = difficulty(props, "lock_difficulty", lockDifficulty);
 		commonLockChance = fraction(props, "common_lock_chance", commonLockChance);
 		lockpickDropChance = fraction(props, "lockpick_drop_chance", lockpickDropChance);
 		playerLocks = playerLocks(props, "pick_player_locks", playerLocks);
@@ -94,6 +103,10 @@ public final class LootEnderConfig {
 
 	public static boolean lockpicking() {
 		return lockpicking;
+	}
+
+	public static LockDifficulty lockDifficulty() {
+		return lockDifficulty;
 	}
 
 	public static float commonLockChance() {
@@ -133,6 +146,16 @@ public final class LootEnderConfig {
 				Main.MOD_ID, key, fallback.name().toLowerCase(java.util.Locale.ROOT));
 			return fallback;
 		}
+	}
+
+	private static LockDifficulty difficulty(Properties props, String key, LockDifficulty fallback) {
+		String value = props.getProperty(key);
+		if (value == null) return fallback;
+		LockDifficulty named = LockDifficulty.named(value);
+		if (named != null) return named;
+		Main.LOGGER.warn("[{}] Config '{}' is not one of easiest/easy/normal/hard, using {}",
+			Main.MOD_ID, key, fallback.getSerializedName());
+		return fallback;
 	}
 
 	private static int integer(Properties props, String key, int fallback) {
@@ -189,6 +212,7 @@ public final class LootEnderConfig {
 	}
 
 	public static void setLockpicking(boolean on) { lockpicking = on; store("lockpicking", String.valueOf(on)); }
+	public static void setLockDifficulty(LockDifficulty difficulty) { lockDifficulty = difficulty; store("lock_difficulty", difficulty.getSerializedName()); }
 	public static void setCommonLockChance(float chance) { commonLockChance = chance; store("common_lock_chance", String.valueOf(chance)); }
 	public static void setLockpickDropChance(float chance) { lockpickDropChance = chance; store("lockpick_drop_chance", String.valueOf(chance)); }
 	public static void setPlayerLocks(PlayerLocks mode) { playerLocks = mode; store("pick_player_locks", mode.name().toLowerCase(java.util.Locale.ROOT)); }
@@ -199,6 +223,11 @@ public final class LootEnderConfig {
 		var group = justfatlard.pandorical.api.PandoricalApi.settings().serverGroup(Main.MOD_ID, "Loot Ender");
 		group.toggle("lockpicking", "Lockpicking", true)
 			.backedBy(player -> lockpicking(), (player, v) -> setLockpicking(v));
+		java.util.Map<String, String> levels = new java.util.LinkedHashMap<>();
+		for (LockDifficulty level : LockDifficulty.values()) levels.put(level.getSerializedName(), level.label);
+		group.choice("lockDifficulty", "Lock difficulty", levels, "normal")
+			.describe("For everyone an op has not set one for, with /lockpicking difficulty")
+			.backedBy(player -> lockDifficulty().getSerializedName(), (player, v) -> setLockDifficulty(LockDifficulty.named(v)));
 		group.number("commonLockChance", "Locked chests, percent", 0, 100, 5, 35)
 			.describe("How many loot chests spawn locked")
 			.backedBy(player -> Math.round(commonLockChance() * 100), (player, v) -> setCommonLockChance(v / 100F));

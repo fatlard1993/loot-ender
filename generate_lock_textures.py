@@ -208,6 +208,10 @@ def iron_palette():
     return tones[0], tones[len(tones) // 2], tones[-1]
 
 
+# Art pixels. The screen draws these sprites at twice this, so every pixel here lands as a
+# chunky two-by-two, the way a block's sixteen do when you stand near it. Drawing at the size
+# shown gave a smooth dial that could have come out of any game; this one is made of the same
+# stuff as the chest behind it.
 SIZE = 64
 CENTRE = SIZE / 2.0
 
@@ -218,143 +222,213 @@ def darker(px, factor):
     plate it lies on."""
     return tuple(min(255, int(c * factor)) for c in px[:3]) + (px[3],)
 
-RECESS = (18, 16, 22, 255)
-VOID = (0, 0, 0, 255)
+VOID = (16, 16, 16, 255)
+STEEL_LIT = (226, 226, 230, 255)
+STEEL_DARK = (96, 96, 104, 255)
 
 
 def blank():
     return [[CLEAR] * SIZE for _ in range(SIZE)]
 
 
-def disc(sprite, radius, colour, inner=0.0):
-    """A filled circle, or a ring when an inner radius is given."""
+def paint(sprite, colour_at):
+    """Every pixel, by its offset from the centre: the axis everything turns about."""
     for y in range(SIZE):
         for x in range(SIZE):
-            dx, dy = x + 0.5 - CENTRE, y + 0.5 - CENTRE
-            d = math.hypot(dx, dy)
-            if inner <= d <= radius:
+            colour = colour_at(x + 0.5 - CENTRE, y + 0.5 - CENTRE)
+            if colour is not None:
                 sprite[y][x] = colour
 
 
-def lit_edge(sprite, radius, light, dark, width=2.0):
-    """A bevel: the rim catches light from the top left and falls into shadow opposite."""
-    for y in range(SIZE):
-        for x in range(SIZE):
-            dx, dy = x + 0.5 - CENTRE, y + 0.5 - CENTRE
-            d = math.hypot(dx, dy)
-            if not (radius - width <= d <= radius):
-                continue
-            sprite[y][x] = light if dx + dy < 0 else dark
+def latch_tones():
+    """The chest's own latch, read off the sheet the block is painted with: its front face is
+    two pixels by four, dark at the top and light at the bottom, and its side a column lighter
+    still. Darkest first, so the plate here is a bigger piece of the same metal."""
+    sheet = vanilla("entity/chest/normal.png")
+    tones = sorted({sheet[y][x][:3] for y in range(1, 5) for x in range(1, 3)})
+    side = sorted({sheet[y][2][:3] for y in range(1, 5)})
+    return [t + (255,) for t in tones], [t + (255,) for t in side]
 
 
-def bar(sprite, half_width, near, far, colour):
-    """A vertical bar running up from the centre, which is the axis everything turns about."""
-    for y in range(SIZE):
-        for x in range(SIZE):
-            dx, dy = x + 0.5 - CENTRE, y + 0.5 - CENTRE
-            if abs(dx) <= half_width and -far <= dy <= -near:
-                sprite[y][x] = colour
+# The lock plate, as the latch is on the block: two wide by four tall, here in art pixels
+LATCH_HALF_W = 10.0
+LATCH_HALF_H = 20.0
+PLUG_RADIUS = 9.0
+
+
+def band(dy, tones):
+    """Which of the latch's top-to-bottom bands a row falls in."""
+    index = int((dy + LATCH_HALF_H) / (2 * LATCH_HALF_H) * 4)
+    return tones[max(0, min(index, len(tones) - 1))]
 
 
 def build_face():
-    """The plate: an iron ring around a dark recess the cylinder sits in."""
-    shadow, body, light = iron_palette()
+    """The plate: the chest's latch, grown. The same four bands of grey top to bottom, the
+    lighter side-column along its right edge, and a round recess cut for the plug."""
+    front, side = latch_tones()
     sprite = blank()
-    disc(sprite, 30.0, body)
-    lit_edge(sprite, 30.0, light, shadow, width=3.0)
-    disc(sprite, 21.0, shadow)
-    disc(sprite, 19.5, RECESS)
+
+    def plate(dx, dy):
+        if abs(dx) > LATCH_HALF_W or abs(dy) > LATCH_HALF_H:
+            return None
+        d = math.hypot(dx, dy)
+        if d <= PLUG_RADIUS:
+            return VOID
+        if d <= PLUG_RADIUS + 1.0:
+            return front[0]
+        return band(dy, side if dx > LATCH_HALF_W - 3.0 else front)
+    paint(sprite, plate)
     return sprite
 
 
 def build_cylinder():
-    """The plug, with the keyway cut across it. This is the part that visibly turns."""
-    shadow, body, light = iron_palette()
+    """The plug, with the keyway cut into it. This is the part that visibly turns, so it is
+    banded top and bottom in the latch's greys: a plain disc turned about its centre is a disc
+    that has not moved."""
+    front, side = latch_tones()
+    dark, mid, light = front[0], front[len(front) // 2], front[-1]
     sprite = blank()
-    disc(sprite, 18.0, body)
-    lit_edge(sprite, 18.0, light, shadow, width=2.0)
-    bar(sprite, 3.0, 0.0, 15.0, VOID)
-    bar(sprite, 3.0, 0.0, 15.0, VOID)
-    # The keyway runs right through, so it reads as a slot rather than a notch
-    for y in range(SIZE):
-        for x in range(SIZE):
-            dx, dy = x + 0.5 - CENTRE, y + 0.5 - CENTRE
-            if abs(dx) <= 3.0 and abs(dy) <= 15.0 and math.hypot(dx, dy) <= 16.0:
-                sprite[y][x] = VOID
+
+    def plug(dx, dy):
+        d = math.hypot(dx, dy)
+        if d > PLUG_RADIUS:
+            return None
+        if d > PLUG_RADIUS - 1.5:
+            return side[-1] if dx + dy < 0 else dark
+        return mid if dy < 0 else light
+    paint(sprite, plug)
+
+    # A throat at the centre and a slot up out of it: the shape a key is, so the pick reads as
+    # sitting in a keyhole rather than lying on a plate. Outlined in the dark grey, then cut.
+    def keyway(dx, dy, throat, half):
+        return math.hypot(dx, dy) <= throat or (abs(dx) <= half and -6.5 <= dy <= 0.0)
+    paint(sprite, lambda dx, dy: dark if keyway(dx, dy, 4.0, 2.5) else None)
+    paint(sprite, lambda dx, dy: VOID if keyway(dx, dy, 3.0, 1.5) else None)
     return sprite
+
+
+OUTLINE = (40, 40, 46, 255)
+
+
+def draw_wire(sprite, segments, offset=(0.0, 0.0), radius=0.6, rim=1.35):
+    """A run of iron wire: a dark outline a pixel outside the metal, and two tones on the
+    metal with the light on the upper-left side. The same drawing as the item in the hotbar,
+    only larger, so the pick on the chest is the pick in the hand."""
+    ox, oy = offset
+
+    def nearest(px, py):
+        best = None
+        for (sx, sy, ex, ey) in segments:
+            sx, sy, ex, ey = sx + ox, sy + oy, ex + ox, ey + oy
+            vx, vy = ex - sx, ey - sy
+            t = max(0.0, min(1.0, ((px - sx) * vx + (py - sy) * vy) / (vx * vx + vy * vy)))
+            qx, qy = sx + t * vx, sy + t * vy
+            d = math.hypot(px - qx, py - qy)
+            if best is None or d < best[0]:
+                best = (d, px - qx, py - qy)
+        return best
+
+    for pass_ in ("outline", "fill"):
+        for y in range(SIZE):
+            for x in range(SIZE):
+                px, py = x + 0.5 - CENTRE, y + 0.5 - CENTRE
+                d, ax, ay = nearest(px, py)
+                if pass_ == "outline" and d <= rim:
+                    sprite[y][x] = OUTLINE
+                elif pass_ == "fill" and d <= radius:
+                    sprite[y][x] = STEEL_LIT if ax + ay < 0 else STEEL_DARK
+
+
+# The pick, as runs of wire about the centre it turns on, in the item icon's own proportions
+# and line weight: a shaft the icon's length, the near end turned over the icon's two pixels
+# and change, the hook the icon's three and a bit, swung off to the side. The shaft runs up
+# the boundary between two pixel columns so it lands two pixels wide, one lit and one shaded,
+# as the icon's does. The plate is drawn at the same pixel scale, so this is the pick in the
+# hotbar, turned upright and put in a lock.
+HOOK = (0.0, -1.0, 2.6, 1.2)
+SHAFT = (0.0, -1.0, 0.0, -14.5)
+BEND = (0.0, -14.5, 2.6, -14.5)
 
 
 def build_pick():
-    """The pick: a shaft up from the keyway with a hooked tip, so which end is which is obvious.
-
-    Drawn in the plate's shadow tone rather than its highlight. A pick the same brightness as
-    the plate it lies on is a pick nobody can see, and where it is pointing is the one thing
-    this screen has to say."""
-    shadow, body, light = iron_palette()
-    edge, core = darker(shadow, 0.35), darker(body, 0.62)
+    """The pick, in the same hand as the one in the hotbar: one bent iron wire, outlined and
+    two-toned the way the game draws its tools."""
     sprite = blank()
-    bar(sprite, 1.5, 2.0, 26.0, edge)
-    bar(sprite, 0.5, 2.0, 26.0, core)
-    # Hook: two pixels stepping off the tip, the tell that this end does the work
-    for step in range(3):
-        x = int(CENTRE + 1.5 + step)
-        y = int(CENTRE - 26.0 + step)
-        for w in range(2):
-            sprite[y + w][x] = edge
-            sprite[y + w][x - 1] = core
+    draw_wire(sprite, [HOOK, SHAFT, BEND])
     return sprite
 
 
-# The pick, drawn rather than plotted: a shape this small is read as a silhouette, and a
-# silhouette is easier to get right by looking at it than by describing it in arithmetic.
-#
-#   .  nothing        s  steel shaft, lit side      S  steel shaft, shadow side
-#   h  hook tip       g  grip, lit                  G  grip, shadow      b  bolster
-PICK = [
-    "................",
-    "..........sss...",
-    "..........h..S..",
-    ".........s..S...",
-    "........s..S....",
-    ".......s..S.....",
-    "......s..S......",
-    ".....s..S.......",
-    "....s..S........",
-    "...bs.S.........",
-    "..bggS..........",
-    ".bgGg...........",
-    ".bgGg...........",
-    "..bgG...........",
-    "...bb...........",
-    "................",
-]
+def build_pick_broken():
+    """The pick a moment after it snapped: the tip still in the keyhole, the rest come away
+    in the hand, sheared through and sprung to one side. Drawn in the pick's place so the
+    break is seen where the pick was, not read off a number going down."""
+    sprite = blank()
+    draw_wire(sprite, [HOOK, (0.0, -1.0, 0.0, -5.5)])
+    draw_wire(sprite, [(0.0, -8.0, 0.0, -14.5), BEND], offset=(3.0, -2.0))
+    return sprite
 
 
 def build_item():
-    """The pick as you carry it.
+    """The pick as you carry it, drawn the way the game draws its own tools: a dark outline
+    round everything and two tones on the metal with the light on the upper edge. It is one
+    piece of iron wire, a nugget's worth: an eye bent at the near end to hold it by and the
+    hook at the far end big enough to read at sixteen pixels. No grip, no second material.
 
-    Three things separate a pick from a stick at sixteen pixels, and the first version of this had
-    none of them: a shaft thin enough to look like wire rather than a branch, a grip in a different
-    material so the eye finds two parts instead of one uniform bar, and a hook at the working end
-    big enough to survive being drawn at this size. The hook is deliberately out of scale - a
-    true-to-life one would be two pixels nobody would ever notice.
+    Plotted along one diagonal rather than pixelled by hand: at this size the outline has to
+    sit exactly one pixel outside the metal on every row, and arithmetic keeps that promise
+    where a hand drawing drifts.
     """
-    shadow, body, light = iron_palette()
-    steel_lit = light
-    steel_dark = darker(body, 0.72)
-    hook = light
-    grip_lit = (116, 84, 58, 255)
-    grip_dark = (78, 54, 36, 255)
-    bolster = darker(shadow, 0.55)
+    size = 16
+    sprite = [[CLEAR] * size for _ in range(size)]
+    outline = (40, 40, 46, 255)
+    steel_lit = (222, 222, 230, 255)
+    steel = (150, 150, 162, 255)
 
-    paint = {"s": steel_lit, "S": steel_dark, "h": hook,
-             "g": grip_lit, "G": grip_dark, "b": bolster}
+    # Off the pixel centres by a third, so the shaft lands two pixels wide: one lit, one shaded
+    ax, ay = 2.85, 11.85
+    bx, by = 12.85, 1.85
+    length = math.hypot(bx - ax, by - ay)
+    ux, uy = (bx - ax) / length, (by - ay) / length
+    nx, ny = -uy, ux
 
-    sprite = [[CLEAR] * 16 for _ in range(16)]
-    for y, row in enumerate(PICK):
-        for x, key in enumerate(row):
-            if key != ".":
-                sprite[y][x] = paint[key]
+    def along(px, py):
+        return ((px - ax) * ux + (py - ay) * uy) / length, (px - ax) * nx + (py - ay) * ny
+
+    # The hook: off the far end, turning down and to the right
+    hx, hy = bx + 2.6, by + 2.2
+
+    def segment_dist(px, py, sx, sy, ex, ey):
+        vx, vy = ex - sx, ey - sy
+        t = max(0.0, min(1.0, ((px - sx) * vx + (py - sy) * vy) / (vx * vx + vy * vy)))
+        return math.hypot(px - (sx + t * vx), py - (sy + t * vy))
+
+    def hook_dist(px, py):
+        return segment_dist(px, py, bx, by, hx, hy)
+
+    # The bend: off the near end, square to the shaft, down and to the right
+    def bend_dist(px, py):
+        return segment_dist(px, py, ax, ay, ax + 2.4, ay + 2.4)
+
+    for pass_ in ("outline", "fill"):
+        for y in range(size):
+            for x in range(size):
+                px, py = x + 0.5, y + 0.5
+                t, d = along(px, py)
+                hd = hook_dist(px, py)
+                bd = bend_dist(px, py)
+                colour = None
+                if pass_ == "outline":
+                    if bd <= 1.35 or (-0.03 <= t <= 1.03 and abs(d) <= 1.35) or hd <= 1.35:
+                        colour = outline
+                else:
+                    if bd <= 0.6:
+                        colour = steel_lit if (px - ax) - (py - ay) > 0 else steel
+                    elif 0.0 <= t <= 1.0 and abs(d) <= 0.6:
+                        colour = steel_lit if d < 0 else steel
+                    elif hd <= 0.6:
+                        colour = steel_lit if py < by + (px - bx) * 0.7 else steel
+                if colour is not None:
+                    sprite[y][x] = colour
     return sprite
 
 
@@ -362,4 +436,5 @@ if __name__ == "__main__":
     write_png(os.path.join(GUI, "lock_face.png"), build_face())
     write_png(os.path.join(GUI, "lock_cylinder.png"), build_cylinder())
     write_png(os.path.join(GUI, "lock_pick.png"), build_pick())
+    write_png(os.path.join(GUI, "lock_pick_broken.png"), build_pick_broken())
     write_png(os.path.join(ITEM, "lockpick.png"), build_item())

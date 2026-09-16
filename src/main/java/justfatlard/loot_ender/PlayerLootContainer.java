@@ -28,6 +28,21 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * always in the same level as the chest.
  */
 public class PlayerLootContainer extends SimpleContainer implements TakeOnly {
+
+	/**
+	 * Nothing goes in, asked the way a container is asked.
+	 *
+	 * <p>The slot mixin is the gate for vanilla's own slot, which never consults this. A slot
+	 * that is not vanilla's does: Pandorical's asks its container, and chest-utils opens these
+	 * copies through Pandorical whenever it is installed. So the mixin covered the plain chest
+	 * screen and nothing covered the good one, and a loot copy opened with chest-utils present
+	 * took items happily. Both gates now, because there are two kinds of slot and they ask
+	 * different questions.
+	 */
+	@Override
+	public boolean canPlaceItem(int slot, net.minecraft.world.item.ItemStack stack) {
+		return false;
+	}
 	private final BlockPos pos;
 	private final UUID owner;
 

@@ -18,15 +18,20 @@ import net.minecraft.world.level.storage.loot.LootTable;
 public enum LockTier {
 	/** No lock at all. Not every chest is worth locking, and a lock means more when some are not. */
 	UNLOCKED(0, 0, 0F, ""),
-	SIMPLE(9, 2, 0.020F, "loot-ender.lock.simple"),
-	STURDY(13, 2, 0.030F, "loot-ender.lock.sturdy"),
-	INTRICATE(17, 1, 0.045F, "loot-ender.lock.intricate"),
-	MASTERWORK(21, 1, 0.065F, "loot-ender.lock.masterwork");
+	SIMPLE(9, 1F, 0.020F, "loot-ender.lock.simple"),
+	STURDY(13, 0.75F, 0.030F, "loot-ender.lock.sturdy"),
+	INTRICATE(17, 0.5F, 0.045F, "loot-ender.lock.intricate"),
+	MASTERWORK(21, 0.25F, 0.065F, "loot-ender.lock.masterwork");
 
 	/** Notches the pick can sit in, across the whole arc. More notches, finer the search. */
 	public final int positions;
-	/** How many notches either side of the sweet spot still turn the lock. */
-	public final int tolerance;
+	/**
+	 * How many notches either side of the sweet spot still turn the lock, on top of the half
+	 * notch the sweet spot is itself: fractions narrow it inside a notch. Across the arc, the
+	 * answer is about 37% of it on a simple lock, 21% sturdy, 12% intricate and 7% masterwork.
+	 * It was twice that, and a lock found by sweeping across it was not a lock that was picked.
+	 */
+	public final float tolerance;
 	/** Chance the pick snaps on a torque as far from the sweet spot as it is possible to be. */
 	/**
 	 * How fast a pick held against a jam wears, per tick, when the pick is as far off as it can
@@ -36,7 +41,7 @@ public enum LockTier {
 	public final float stressRate;
 	public final String nameKey;
 
-	LockTier(int positions, int tolerance, float stressRate, String nameKey) {
+	LockTier(int positions, float tolerance, float stressRate, String nameKey) {
 		this.positions = positions;
 		this.tolerance = tolerance;
 		this.stressRate = stressRate;

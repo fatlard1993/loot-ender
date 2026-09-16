@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import justfatlard.loot_ender.LootEnderItems;
 import justfatlard.pandorical.api.ComponentBuilder;
 import justfatlard.pandorical.api.ComponentType;
 import justfatlard.pandorical.api.PandoricalApi;
@@ -17,15 +18,18 @@ import net.minecraft.server.level.ServerPlayer;
  *
  * <p>A screen, because a screen is the one thing the game will hold a player still for: while
  * it is up the mouse and the keys are its and not the world's, and closing it is the only way
- * out. What it shows is the chest itself - its front cut from the same sheet the block is
- * painted with, blown up until it fills the view - with the lock plate over the latch, so the
- * thing being picked still looks like the thing that was clicked.
+ * out. Nothing is framed. The world darkens behind, and in the middle of it is the chest
+ * itself - its front cut from the same sheet the block is painted with, blown up until it
+ * fills the view - with the latch over the seam grown to a lock plate, so the thing being
+ * picked still looks like the thing that was clicked. The picks you have left sit in one
+ * corner, the lock's grade in the other, and the controls run along the bottom.
  *
  * <p>Three sprites share the plate's square and its centre, so turning them turns them in
- * place: the face never moves, the cylinder shows how far the last turn got, and the pick is a
- * dial - it follows the mouse round the keyhole on the client's own clock, and reports back.
- * There were buttons for left, right and turn once, and a lock worked a notch per click read
- * as a form to fill in rather than a thing in the hand.
+ * place: the plate never moves, the plug shows how far the turn has got, and the pick is a
+ * dial - swept round the keyhole on the client's own clock, pushed to turn, and turned with the
+ * plug when the plug turns, because it is sitting in it. There were buttons for left, right
+ * and turn once, and a lock worked a notch per click read as a form to fill in rather than a
+ * thing in the hand.
  */
 public final class LockScreen {
 	private LockScreen() {}
@@ -33,10 +37,13 @@ public final class LockScreen {
 	public static final String TYPE = "loot-ender:lock";
 
 	public static final String PICK = "pick";
-	public static final String LEAVE = "leave";
 
-	private static final int WIDTH = 176;
-	private static final int HEIGHT = 192;
+	private static final int WIDTH = 260;
+	/**
+	 * The game never scales its interface below 240 tall, and this must clear the hotbar drawn
+	 * along the bottom of that: what fits on a small laptop fits everywhere.
+	 */
+	private static final int HEIGHT = 196;
 
 	/** The chest's own sheet, so the front here is the front out there to the pixel. */
 	private static final String CHEST_SHEET = "minecraft:textures/entity/chest/normal.png";
@@ -56,25 +63,37 @@ public final class LockScreen {
 	 * pixels: the client grows a sprite from the middle of its native bounds, and an even
 	 * factor on an odd height puts every edge half a pixel off.
 	 */
-	private static final int SCALE = 7;
+	private static final int SCALE = 11;
 	private static final int CHEST_SIZE = FRONT_COLS * SCALE;
 	private static final int CHEST_X = (WIDTH - CHEST_SIZE) / 2;
-	private static final int CHEST_Y = 20;
+	/** Under the corner captions and clear of the hints: the chest takes everything between. */
+	private static final int CHEST_Y = 14;
+	/** Where the lid meets the base, which is where the latch sits on the block. */
+	private static final int SEAM_Y = CHEST_Y + LID_ROWS * SCALE;
 
 	private static final String PLATE_SHEET = "loot-ender:textures/gui/lock_face.png";
 	private static final String CYLINDER_SHEET = "loot-ender:textures/gui/lock_cylinder.png";
 	private static final String PICK_SHEET = "loot-ender:textures/gui/lock_pick.png";
-	private static final int PLATE_SIZE = 64;
-	private static final int PLATE_X = CHEST_X + (CHEST_SIZE - PLATE_SIZE) / 2;
-	private static final int PLATE_Y = CHEST_Y + (CHEST_SIZE - PLATE_SIZE) / 2;
+	private static final String PICK_BROKEN_SHEET = "loot-ender:textures/gui/lock_pick_broken.png";
+	private static final int PLATE_SIZE = 128;
+	private static final int PLATE_X = (WIDTH - PLATE_SIZE) / 2;
+	private static final int PLATE_Y = SEAM_Y - PLATE_SIZE / 2;
 
 	/** The arc the pick sweeps across the lock, in degrees, from one end of the cylinder to the other. */
 	static final float SWEEP = 140F;
 	/** How far the cylinder turns when it turns all the way. */
 	private static final float FULL_TURN = 90F;
 
-	private static final String LABEL_COLOR = "#404040";
-	private static final String HINT_COLOR = "#707070";
+	private static final String TITLE_COLOR = "#F0E6D2";
+	private static final String COUNT_COLOR = "#FFFFFF";
+	private static final String SNAPPED_COLOR = "#FF5555";
+	private static final String HINT_COLOR = "#8C8C8C";
+	private static final String WEAR_SLOT_COLOR = "#FF1B1B1B";
+
+	private static final int WEAR_X = 8;
+	private static final int WEAR_Y = 20;
+	private static final int WEAR_WIDTH = 34;
+	private static final int WEAR_HEIGHT = 2;
 
 	private static final Map<UUID, String> open = new ConcurrentHashMap<>();
 
@@ -83,10 +102,26 @@ public final class LockScreen {
 			.size(WIDTH, HEIGHT)
 			.title("Lock");
 
-		screen.panel("frame", 0, 0, WIDTH, HEIGHT, Map.of());
-		screen.component(centred("title", 7, Map.of(
-			ComponentType.PROP_TEXT_KEY, attempt.tier.nameKey,
-			ComponentType.PROP_COLOR, LABEL_COLOR)));
+		screen.itemIcon("pick_icon", 6, 2, LootEnderItems.LOCKPICK_ID.toString(), 1);
+		screen.component(new ComponentBuilder("picks", ComponentType.TEXT)
+			.bounds(26, 6, 40, 10)
+			.prop(ComponentType.PROP_TEXT, picks(player))
+			.prop(ComponentType.PROP_COLOR, COUNT_COLOR)
+			.prop(ComponentType.PROP_SHADOW, "true"));
+		// The pick's wear, drawn the way the game draws wear under a tool: a dark slot with a
+		// bar in it that shortens and reddens. Under the icon and the count, so it reads as theirs.
+		screen.component(new ComponentBuilder("wear_slot", ComponentType.SPRITE)
+			.bounds(WEAR_X - 1, WEAR_Y - 1, WEAR_WIDTH + 2, WEAR_HEIGHT + 2)
+			.prop(ComponentType.PROP_COLOR, WEAR_SLOT_COLOR));
+		screen.component(new ComponentBuilder("wear", ComponentType.SPRITE)
+			.bounds(WEAR_X, WEAR_Y, WEAR_WIDTH, WEAR_HEIGHT)
+			.prop(ComponentType.PROP_COLOR, wearColor(attempt)));
+		screen.component(new ComponentBuilder("title", ComponentType.TEXT)
+			.bounds(WIDTH / 2, 6, WIDTH / 2 - 8, 10)
+			.prop(ComponentType.PROP_TEXT_KEY, attempt.tier.nameKey)
+			.prop(ComponentType.PROP_COLOR, TITLE_COLOR)
+			.prop(ComponentType.PROP_SHADOW, "true")
+			.prop(ComponentType.PROP_ALIGN, "right"));
 
 		// Base under lid, as on the block, so the lid's bottom edge is what shows at the seam.
 		screen.component(chestPart("base", BASE_V, BASE_ROWS,
@@ -97,34 +132,46 @@ public final class LockScreen {
 		screen.component(plateLayer("cylinder", CYLINDER_SHEET, cylinderDegrees(attempt)));
 		screen.component(new ComponentBuilder(PICK, ComponentType.DIAL)
 			.bounds(PLATE_X, PLATE_Y, PLATE_SIZE, PLATE_SIZE)
+			.rotation(cylinderDegrees(attempt))
 			.prop(ComponentType.PROP_TEXTURE, PICK_SHEET)
 			.prop(ComponentType.PROP_SWEEP, String.valueOf(SWEEP)));
 
-		screen.component(centred("status", CHEST_Y + CHEST_SIZE + 6, Map.of(
-			ComponentType.PROP_TEXT, status(player, attempt),
-			ComponentType.PROP_COLOR, LABEL_COLOR)));
-		screen.component(new ComponentBuilder("hint", ComponentType.TEXT)
-			.bounds(8, CHEST_Y + CHEST_SIZE + 20, WIDTH - 16, 20)
-			.prop(ComponentType.PROP_TEXT_KEY, "loot-ender.lock.hint")
-			.prop(ComponentType.PROP_COLOR, HINT_COLOR)
-			.prop(ComponentType.PROP_WRAP_WIDTH, String.valueOf(WIDTH - 16))
-			.prop(ComponentType.PROP_ALIGN, "center"));
-
-		screen.button(LEAVE, (WIDTH - 60) / 2, HEIGHT - 28, 60, 20, Map.of(ComponentType.PROP_LABEL_KEY, "loot-ender.lock.leave"));
+		screen.component(centred("hint_pick", HEIGHT - 24, Map.of(
+			ComponentType.PROP_TEXT_KEY, "loot-ender.lock.hint.pick",
+			ComponentType.PROP_COLOR, HINT_COLOR,
+			ComponentType.PROP_SHADOW, "true")));
+		screen.component(centred("hint_turn", HEIGHT - 12, Map.of(
+			ComponentType.PROP_TEXT_KEY, "loot-ender.lock.hint.turn",
+			ComponentType.PROP_COLOR, HINT_COLOR,
+			ComponentType.PROP_SHADOW, "true")));
 
 		open.put(player.getUUID(), screen.screenId());
 		PandoricalApi.screens().open(player, screen.build());
 	}
 
-	/** Show where the pick is now, how far the cylinder got, and what is left to snap. */
+	/**
+	 * Show how far the cylinder has got, the pick going round with it and trembling by how
+	 * worn it is, or lying snapped; the wear on the bar in the corner; and what is left, in
+	 * red for a moment when one has just gone.
+	 */
 	public static void refresh(ServerPlayer player, LockAttempt attempt) {
 		String id = open.get(player.getUUID());
 		if (id == null) return;
 
+		String degrees = String.valueOf(cylinderDegrees(attempt));
+		boolean snapped = attempt.broken > 0;
 		PandoricalApi.screens().update(player, id, List.of(
-			new ComponentUpdate(PICK, Map.of(ComponentType.PROP_SHAKE, String.valueOf(attempt.shaking))),
-			new ComponentUpdate("cylinder", Map.of(ComponentType.PROP_ROTATION, String.valueOf(cylinderDegrees(attempt)))),
-			new ComponentUpdate("status", Map.of(ComponentType.PROP_TEXT, status(player, attempt)))));
+			new ComponentUpdate(PICK, Map.of(
+				ComponentType.PROP_ROTATION, degrees,
+				ComponentType.PROP_TEXTURE, snapped ? PICK_BROKEN_SHEET : PICK_SHEET,
+				ComponentType.PROP_SHAKE, String.valueOf(shake(attempt)))),
+			new ComponentUpdate("cylinder", Map.of(ComponentType.PROP_ROTATION, degrees)),
+			new ComponentUpdate("wear", Map.of(
+				ComponentType.PROP_WIDTH, String.valueOf(wearWidth(attempt)),
+				ComponentType.PROP_COLOR, wearColor(attempt))),
+			new ComponentUpdate("picks", Map.of(
+				ComponentType.PROP_TEXT, picks(player),
+				ComponentType.PROP_COLOR, snapped ? SNAPPED_COLOR : COUNT_COLOR))));
 	}
 
 	public static void close(ServerPlayer player) {
@@ -136,8 +183,28 @@ public final class LockScreen {
 		open.remove(player);
 	}
 
-	private static String status(ServerPlayer player, LockAttempt attempt) {
-		return "Picks left " + Lockpicking.countPicks(player);
+	private static String picks(ServerPlayer player) {
+		return "x " + Lockpicking.countPicks(player);
+	}
+
+	/** A jammed pick trembles from the moment it jams, and worse the more worn it is. */
+	private static float shake(LockAttempt attempt) {
+		if (!attempt.shaking) return 0F;
+		return 0.2F + 0.8F * Math.clamp(attempt.wear, 0F, 1F);
+	}
+
+	private static float remaining(LockAttempt attempt) {
+		return Math.clamp(1F - attempt.wear, 0F, 1F);
+	}
+
+	private static int wearWidth(LockAttempt attempt) {
+		return Math.round(WEAR_WIDTH * remaining(attempt));
+	}
+
+	/** Green to red as it goes, on the same hue walk vanilla's durability bar takes. */
+	private static String wearColor(LockAttempt attempt) {
+		int rgb = net.minecraft.util.Mth.hsvToRgb(remaining(attempt) / 3F, 1F, 1F);
+		return String.format("#%06X", rgb & 0xFFFFFF);
 	}
 
 	private static float cylinderDegrees(LockAttempt attempt) {

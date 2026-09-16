@@ -18,6 +18,7 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		justfatlard.loot_ender.lock.LockDifficulty.init();
 		LootEnderConfig.load();
 		if (justfatlard.pandorical.api.PandoricalApi.isAvailable()) LootEnderConfig.menu();
 		LootEnderItems.register();
@@ -26,6 +27,9 @@ public class Main implements ModInitializer {
 		// restart to make the screen answer, and turning it off leaves no half-wired handler.
 		justfatlard.loot_ender.lock.Lockpicking.registerHandlers();
 		justfatlard.loot_ender.lock.LockpickLoot.register();
+		LootGuard.register();
+		net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register(
+			(dispatcher, registry, environment) -> justfatlard.loot_ender.lock.LockCommands.register(dispatcher));
 
 		// The clasps are this mod's own art, and this mod is not on anybody's client. Pandorical
 		// carries them over on connect and reloads resources afterwards, which is what gets them

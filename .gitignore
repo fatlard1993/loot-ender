@@ -10,3 +10,6 @@ out/
 
 # OS
 .DS_Store
+
+# Loom dev client/server run directory
+run/

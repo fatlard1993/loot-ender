@@ -12,6 +12,12 @@ import net.minecraft.world.Container;
  * players stash things in every double chest in the world.
  */
 public class LootDoubleContainer extends CompoundContainer implements TakeOnly {
+
+	/** Nothing goes in, the same as either half; see {@link PlayerLootContainer#canPlaceItem}. */
+	@Override
+	public boolean canPlaceItem(int slot, net.minecraft.world.item.ItemStack stack) {
+		return false;
+	}
 	public LootDoubleContainer(Container first, Container second) {
 		super(first, second);
 	}

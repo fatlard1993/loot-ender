@@ -4,13 +4,13 @@
 	"loot-ender.lock.sturdy": "Sturdy Lock",
 	"loot-ender.lock.intricate": "Intricate Lock",
 	"loot-ender.lock.masterwork": "Masterwork Lock",
-	"loot-ender.lock.turn": "Turn",
-	"loot-ender.lock.picks": "Picks left:",
-	"loot-ender.lock.hint": "Move the mouse to work the pick round. Hold the button, or space, to turn: the nearer the pick, the further it goes. Forced against a jam, it snaps.",
+	"loot-ender.lock.hint.pick": "Mouse, or A and D, sets the pick",
+	"loot-ender.lock.hint.turn": "Hold Space to turn  \u00b7  Esc to leave",
+	"loot-ender.unbreakable": "Only an op can break a loot chest.",
 	"loot-ender.lock.no_picks": "This chest is locked, and you have nothing to pick it with.",
 	"loot-ender.lock.out_of_picks": "Your last pick snapped.",
+	"loot-ender.lock.spent": "That pick was too worn to keep.",
 	"loot-ender.lock.picking_claim": "Picking %s's lock.",
-	"loot-ender.lock.left": "Left",
-	"loot-ender.lock.right": "Right",
-	"loot-ender.lock.leave": "Leave"
+	"loot-ender.lock.hint.pick.controller": "[pointer] sets the pick",
+	"loot-ender.lock.hint.turn.controller": "Hold [confirm] to turn  \u00b7  [back] to leave"
 }

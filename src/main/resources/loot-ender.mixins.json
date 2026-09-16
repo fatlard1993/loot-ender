@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "LootContainerOpenMixin",
+    "LootExplosionMixin",
     "LootSlotMixin",
+    "LootVehicleGuardMixin",
     "LootVehicleOpenMixin"
   ],
   "client": [],
