@@ -2,6 +2,11 @@
 
 A Minecraft Fabric mod. Structure loot is rolled per player, so nobody arrives second.
 
+## Screenshots
+
+![Three loot chests in a stronghold room, each wearing the gold clasp of one nobody has been into](loot-chests.png)
+![The lock on a masterwork chest: the pick in the keyhole, the cylinder, and what turns it](lock.png)
+
 ## What This Mod Does
 
 The first player to reach a dungeon chest empties it and everyone behind them finds a box of air. That turns exploring together into a race, and a race nobody agreed to enter.
