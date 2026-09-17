@@ -39,6 +39,8 @@ public final class Showcase implements FabricClientGameTest {
 			server.runCommand("gamerule doWeatherCycle false");
 			server.runCommand("time set noon");
 			server.runCommand("gamemode creative @a");
+			// Said early, so the line about it has faded out of the chat before the lock is shown:
+			// the chat sits exactly where the lock's own instructions are.
 			// A lock is only ever shown to somebody carrying something to pick it with.
 			server.runCommand("give @a loot-ender:lockpick 3");
 
@@ -72,6 +74,7 @@ public final class Showcase implements FabricClientGameTest {
 
 			// And the lock itself, through the call a chest makes when somebody reaches for it.
 			context.getInput().pressKey(options -> options.keyToggleGui);
+			context.waitTicks(220);
 			server.runOnServer(s -> Lockpicking.unlocked(s.overworld(), connection.getServerPlayer(),
 				chest, chest.asLong(), BuiltInLootTables.STRONGHOLD_LIBRARY, 0L, player -> { }));
 			context.waitTicks(40);
