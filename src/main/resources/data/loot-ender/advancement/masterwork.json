@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "loot-ender:lockpick"
+    },
+    "title": "Masterwork",
+    "description": "Pick the best lock there is, by hand, without breaking it",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "picked": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

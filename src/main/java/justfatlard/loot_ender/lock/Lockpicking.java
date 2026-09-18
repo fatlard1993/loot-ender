@@ -302,6 +302,11 @@ public final class Lockpicking {
 		if (attempt.remembered) LockVault.get(player.level()).remember(player.getUUID(), attempt.key);
 
 		player.level().playSound(null, attempt.pos, SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 0.6F, 1.6F);
+		// The hardest tier is the one worth marking: end city treasure, a mansion, a bastion's
+		// best chest. Picked, not blown open and not remembered from last time.
+		if (attempt.tier == LockTier.MASTERWORK && !attempt.remembered) {
+			justfatlard.loot_ender.Awards.pickedMasterwork(player);
+		}
 		attempt.open.accept(player);
 	}
 
