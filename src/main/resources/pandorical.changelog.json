@@ -1,0 +1,15 @@
+{
+	"overview": [
+		"Structure loot is rolled per player, so nobody arrives second. Opening a dungeon chest opens your own copy of it, and the player behind you still gets a first look."
+	],
+	"versions": {
+		"1.1.0": [
+			"The best chests put a lock in the way: picks that wear as you work them, a difficulty you can set for yourself, and an answer rolled fresh every visit so no lock can be probed and come back to. Picking a masterwork earns an advancement.",
+			"Loot chests, and loot minecarts, now stand until an operator breaks one: breaking one used to roll the table onto the ground for whoever swung first and take everyone else's copy with it."
+		],
+		"1.0.0": [
+			"Loot chests open as your own copy, take-only and never unpacked, in the same block with the same lid and the same sound as any other chest.",
+			"A gold clasp marks a loot chest nobody has been into and a darkened one marks a chest you have emptied, which is the one thing the game can no longer tell you once loot is per player. Chest minecarts work the same way."
+		]
+	}
+}
