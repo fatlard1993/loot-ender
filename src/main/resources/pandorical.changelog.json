@@ -3,10 +3,13 @@
 		"Structure loot is rolled per player, so nobody arrives second. Opening a dungeon chest opens your own copy of it, and the player behind you still gets a first look."
 	],
 	"versions": {
+		"1.1.1": [
+			"Picking a masterwork lock earns an advancement."
+		],
 		"1.1.0": [
 			"The best chests put a lock in the way: picks that wear as you work them.",
 			"A difficulty you can set for yourself, and an answer rolled fresh every visit.",
-			"No lock can be probed and come back to. Picking a masterwork earns an advancement.",
+			"No lock can be probed and come back to.",
 			"Loot chests and loot minecarts stand until an operator breaks one.",
 			"Breaking one used to roll the table onto the ground and take everyone else's copy with it."
 		],
