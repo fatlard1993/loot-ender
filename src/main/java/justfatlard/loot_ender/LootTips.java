@@ -44,7 +44,7 @@ public final class LootTips {
 		BlockTipApi.describe(PRIORITY, (level, pos, state, player) -> {
 			if (!(level instanceof ServerLevel serverLevel)) return null;
 
-			return LootVault.get(serverLevel).isSpent(player.getUUID(), pos)
+			return LootVault.get(serverLevel).isSpent(serverLevel, player.getUUID(), pos)
 				? "Emptied"
 				: null;
 		});

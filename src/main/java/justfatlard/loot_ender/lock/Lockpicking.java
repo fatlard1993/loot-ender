@@ -217,7 +217,10 @@ public final class Lockpicking {
 		LockVault vault = LockVault.get(level);
 		if (vault.isPicked(player.getUUID(), key)) return true;
 
-		LockTier tier = LockTier.on(table, pos, seed);
+		// Decided by the chest's own identity, not where it stands: a loot chest a ship carries, or
+		// a cart pushed along, would otherwise lock and unlock as it moved. A chest filed by where it
+		// stood is filed under that position, so its answer is the one it always had.
+		LockTier tier = LockTier.on(table, BlockPos.of(key), seed);
 		if (tier == LockTier.UNLOCKED) return true;
 
 		if (countPicks(player) == 0) {

@@ -33,6 +33,7 @@ A chest you have been keeping wheat in is not a loot chest and never becomes one
 
 ## Details Worth Knowing
 
+- **A chest is the same chest wherever it goes.** Your copy is filed under the chest itself, not the spot it stands on, so a loot chest carried aboard a [Big Boats](https://github.com/fatlard1993/big-boats) ship, a captured pirate ship's hold for one, does not roll again at every mooring.
 - **Your roll is stable.** It is seeded from the chest's own seed, your UUID, and the position. Reopening a chest you have not taken from shows the same contents.
 - **Two players get different loot.** Same chest, different rolls, because identical chests read as fake.
 - **You can take, not put.** A copy that accepted items would be a private chest at every dungeon in the world, and a promise to remember an inventory per player per chest forever. Taking is all these are for.

@@ -51,7 +51,7 @@ public final class LootOpening {
 		if (front == null || front.getLootTable() == null) return null;
 
 		if (!justfatlard.loot_ender.lock.Lockpicking.unlocked(level, player, parts.get(0),
-				parts.get(0).asLong(), front.getLootTable(), front.getLootTableSeed(),
+				LootKey.claim(level, parts.get(0), LootVault.get(level)), front.getLootTable(), front.getLootTableSeed(),
 				picked -> showCopies(level, picked, parts))) {
 			return InteractionResult.SUCCESS;
 		}

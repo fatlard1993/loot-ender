@@ -18,6 +18,7 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		LootKey.register();
 		justfatlard.loot_ender.lock.LockDifficulty.init();
 		LootEnderConfig.load();
 		if (justfatlard.pandorical.api.PandoricalApi.isAvailable()) LootEnderConfig.menu();
@@ -61,8 +62,9 @@ public class Main implements ModInitializer {
 		PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, blockEntity) -> {
 			if (level instanceof ServerLevel serverLevel) {
 				LootVault vault = LootVault.get(serverLevel);
-				vault.forget(pos);
-				justfatlard.loot_ender.lock.LockVault.get(serverLevel).forget(pos);
+				long chest = LootKey.of(blockEntity, pos);
+				vault.forget(chest);
+				justfatlard.loot_ender.lock.LockVault.get(serverLevel).forget(chest);
 				LootIndex.forget(serverLevel, pos);
 				for (ServerPlayer online : serverLevel.players()) {
 					// Unmarked, not marked unopened: there is no chest here to open.
@@ -79,11 +81,12 @@ public class Main implements ModInitializer {
 			List<BlockPos> fresh = LootIndex.noticed(serverLevel, chunk);
 			if (fresh.isEmpty()) return;
 
-			LootVault vault = LootVault.get(serverLevel);
+			// Asked of the index, not the world: this chunk is still loading, and reading a block
+			// from it now waits on the very load that is running.
 			for (ServerPlayer online : serverLevel.players()) {
 				LootMarks.noticed(online,
-					fresh.stream().filter(pos -> vault.isSpent(online.getUUID(), pos)).toList(),
-					fresh.stream().filter(pos -> !vault.isSpent(online.getUUID(), pos)).toList());
+					fresh.stream().filter(pos -> LootIndex.isSpent(serverLevel, online, pos)).toList(),
+					fresh.stream().filter(pos -> !LootIndex.isSpent(serverLevel, online, pos)).toList());
 			}
 		});
 

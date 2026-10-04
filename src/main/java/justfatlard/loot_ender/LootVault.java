@@ -33,9 +33,12 @@ import net.minecraft.world.phys.Vec3;
  * too. What a player takes comes out of the copy made here on their first open,
  * so arriving second at a dungeon costs nothing.
  *
+ * <p>Copies are filed by the chest's identity ({@link LootKey}), which travels with
+ * the chest when a ship carries it, rather than by where it stands.
+ *
  * <p>Only chests somebody walked away from mid-empty are kept as inventories.
  * Once a copy runs out it is thrown away and all that is remembered is the
- * position, because the only question left to answer about it is "anything here
+ * chest, because the only question left to answer about it is "anything here
  * for me?" and the answer is no. Copies are take-only, so a full one can only
  * ever shrink and the common ending is a single number rather than 27 slots.
  *
@@ -83,20 +86,21 @@ public final class LootVault extends SavedData {
 	public PlayerLootContainer copyFor(ServerLevel level, ServerPlayer player, BlockPos pos,
 			ResourceKey<LootTable> table, long seed) {
 		UUID id = player.getUUID();
+		long chest = LootKey.claim(level, pos, this);
 
 		// Emptied already: hand back an empty copy rather than rolling a second
 		// helping. Not stored, because there is nothing in it to store.
-		if (this.spent.getOrDefault(id, Set.of()).contains(pos.asLong())) {
-			return new PlayerLootContainer(pos, id, SLOTS, this);
+		if (this.spent.getOrDefault(id, Set.of()).contains(chest)) {
+			return new PlayerLootContainer(chest, pos, id, SLOTS, this, true);
 		}
 
 		Map<Long, PlayerLootContainer> mine = this.copies.computeIfAbsent(id, key -> new HashMap<>());
-		PlayerLootContainer existing = mine.get(pos.asLong());
+		PlayerLootContainer existing = mine.get(chest);
 		if (existing != null) return existing;
 
-		PlayerLootContainer container = new PlayerLootContainer(pos, id, SLOTS, this);
+		PlayerLootContainer container = new PlayerLootContainer(chest, pos, id, SLOTS, this, true);
 		fill(level, player, pos, container, table, seed);
-		mine.put(pos.asLong(), container);
+		mine.put(chest, container);
 		this.setDirty();
 		return container;
 	}
@@ -158,29 +162,45 @@ public final class LootVault extends SavedData {
 	 * chest and walking the whole list to answer would scale with how much of the
 	 * world they had already looted.
 	 */
-	public boolean isSpent(UUID player, BlockPos pos) {
-		Set<Long> mine = this.spent.get(player);
-		return mine != null && mine.contains(pos.asLong());
+	public boolean isSpent(ServerLevel level, UUID player, BlockPos pos) {
+		return isSpent(player, LootKey.of(level, pos));
 	}
 
-	/** Every chest this player has already emptied, for restating marks on a join. */
+	/** Whether the chest filed under this key is spent for this player. */
+	public boolean isSpent(UUID player, long key) {
+		Set<Long> mine = this.spent.get(player);
+		return mine != null && mine.contains(key);
+	}
+
+	/**
+	 * Every chest this player has already emptied that is filed where it stands, for restating
+	 * marks on a join. A chest filed by identity names no place; its mark comes from the index of
+	 * loot chests actually standing in the world.
+	 */
 	public List<BlockPos> spentFor(UUID player) {
 		Set<Long> mine = this.spent.get(player);
 		if (mine == null) return List.of();
 
 		List<BlockPos> out = new ArrayList<>();
-		for (long packed : mine) out.add(BlockPos.of(packed));
+		for (long packed : mine) if (!LootKey.isIdentity(packed)) out.add(BlockPos.of(packed));
 		return out;
 	}
 
+	/** Whether anybody has a copy of, or has emptied, the chest filed under this key. */
+	boolean knows(long key) {
+		for (Map<Long, PlayerLootContainer> mine : this.copies.values()) if (mine.containsKey(key)) return true;
+		for (Set<Long> mine : this.spent.values()) if (mine.contains(key)) return true;
+		return false;
+	}
+
 	/** Forget a chest that no longer exists, for everyone who had a copy of it. */
-	public void forget(BlockPos pos) {
+	public void forget(long key) {
 		boolean removed = false;
 		for (Map<Long, PlayerLootContainer> mine : this.copies.values()) {
-			removed |= mine.remove(pos.asLong()) != null;
+			removed |= mine.remove(key) != null;
 		}
 		for (Set<Long> mine : this.spent.values()) {
-			removed |= mine.remove(pos.asLong());
+			removed |= mine.remove(key);
 		}
 		if (removed) this.setDirty();
 	}

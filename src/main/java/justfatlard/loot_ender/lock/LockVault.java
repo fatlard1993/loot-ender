@@ -67,10 +67,10 @@ public final class LockVault extends SavedData {
 	}
 
 	/** A broken chest takes its lock with it, the same way it takes everyone's copy. */
-	public void forget(BlockPos pos) {
+	public void forget(long key) {
 		boolean changed = false;
 		for (Set<Long> theirs : this.picked.values()) {
-			changed |= theirs.remove(pos.asLong());
+			changed |= theirs.remove(key);
 		}
 		if (changed) this.setDirty();
 	}

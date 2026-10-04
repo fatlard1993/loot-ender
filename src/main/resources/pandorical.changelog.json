@@ -3,6 +3,10 @@
 		"Structure loot is rolled per player, so nobody arrives second. Opening a dungeon chest opens your own copy of it, and the player behind you still gets a first look."
 	],
 	"versions": {
+		"1.1.2": [
+			"A loot chest carried aboard a ship is still the chest you emptied: docking somewhere new no longer rolls it again.",
+			"Whether a loot chest is locked goes with the chest too, so a ship's does not lock and unlock as she moves."
+		],
 		"1.1.1": [
 			"Picking a masterwork lock earns an advancement."
 		],

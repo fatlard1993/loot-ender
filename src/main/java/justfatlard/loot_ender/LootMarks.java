@@ -36,8 +36,9 @@ public final class LootMarks {
 	 * stated as a whole without disturbing the other.
 	 */
 	public static void restate(ServerPlayer player) {
-		PandoricalApi.chestOverlays().replace(player, LOOTED,
-			LootVault.get(player.level()).spentFor(player.getUUID()));
+		List<BlockPos> looted = new java.util.ArrayList<>(LootVault.get(player.level()).spentFor(player.getUUID()));
+		looted.addAll(LootIndex.carriedSpentFor(player.level(), player));
+		PandoricalApi.chestOverlays().replace(player, LOOTED, looted);
 		PandoricalApi.chestOverlays().replace(player, SEALED,
 			LootIndex.unopenedFor(player.level(), player));
 	}

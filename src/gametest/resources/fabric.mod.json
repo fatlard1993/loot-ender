@@ -8,6 +8,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"fabric-client-gametest": [
+			"justfatlard.loot_ender.gametest.LootTravels",
 			"justfatlard.loot_ender.gametest.Showcase"
 		]
 	},
