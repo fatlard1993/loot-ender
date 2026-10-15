@@ -129,9 +129,7 @@ Where [Block Tip](https://github.com/fatlard1993/block-tip) is installed, a loot
 
 ## Pandorical
 
-Loot Ender runs server-side, and Pandorical is required: the server will not load this mod without it. It is used for the clasps on loot chests, drawn through Pandorical's chest overlay API, the lock screen when lockpicking is on, and the settings page in the mods menu.
-
-No Loot Ender jar is needed on a client.
+Loot Ender goes on the server only, and **Pandorical is required there and on every player's client**: the lockpick is a new item, and a client without Pandorical has no entry for it. Pandorical also draws the clasps on loot chests, the lock screen and the settings page.
 
 ## Development
 
