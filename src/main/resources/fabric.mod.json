@@ -32,5 +32,12 @@
 	"suggests": {
 		"block-tip": "*",
 		"chest-utils": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"links": {
+				"modmenu.donate": "https://github.com/sponsors/fatlard1993"
+			}
+		}
 	}
 }
