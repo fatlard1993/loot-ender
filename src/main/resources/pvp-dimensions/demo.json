@@ -1,0 +1,36 @@
+{
+  "demo": {
+    "name": "Loot Ender",
+    "icon": "loot-ender:lockpick",
+    "about": [
+      "Structure loot is rolled for each player, so nobody arrives second, and the chests worth the trip are locked.",
+      "Set the loot chests and the barrel down apart from each other and pick their locks: sweep the pick with the mouse or A and D, hold space to turn, and read how far the cylinder goes."
+    ]
+  },
+  "pvp_preset": 1,
+  "needs": ["loot-ender"],
+  "preset": {
+    "name": "Loot Ender",
+    "icon": "loot-ender:lockpick",
+    "pvp": false,
+    "game_mode": "survival",
+    "entry_kit": [
+      {"slot": 0, "item": {"id": "minecraft:chest", "count": 1, "components": {"minecraft:container_loot": {"loot_table": "minecraft:chests/simple_dungeon"}}}},
+      {"slot": 1, "item": {"id": "minecraft:chest", "count": 1, "components": {"minecraft:container_loot": {"loot_table": "minecraft:chests/desert_pyramid"}}}},
+      {"slot": 2, "item": {"id": "minecraft:chest", "count": 1, "components": {"minecraft:container_loot": {"loot_table": "minecraft:chests/stronghold_library"}}}},
+      {"slot": 3, "item": {"id": "minecraft:barrel", "count": 1, "components": {"minecraft:container_loot": {"loot_table": "minecraft:chests/village/village_plains_house"}}}},
+      {"slot": 4, "item": {"id": "loot-ender:lockpick", "count": 16}},
+      {"slot": 5, "item": {"id": "minecraft:iron_nugget", "count": 16}},
+      {"slot": 8, "item": {"id": "minecraft:bread", "count": 8}}
+    ],
+    "respawn_kit": "entry",
+    "goal": "time",
+    "mobs": "off",
+    "life": 15,
+    "size": 2,
+    "world": "overworld",
+    "shape": "flat",
+    "biome": "minecraft:desert",
+    "weather": "clear"
+  }
+}
