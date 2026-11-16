@@ -96,6 +96,11 @@ public final class LockScreen {
 	private static final int WEAR_HEIGHT = 2;
 
 	private static final Map<UUID, String> open = new ConcurrentHashMap<>();
+	/**
+	 * What each part of an open lock last showed, by player, so a refresh sends only the parts
+	 * that changed: the cylinder stands still while the pick trembles, and the count while it turns.
+	 */
+	private static final Map<UUID, Map<String, Map<String, String>>> shown = new ConcurrentHashMap<>();
 
 	public static void open(ServerPlayer player, LockAttempt attempt) {
 		ScreenBuilder screen = new ScreenBuilder(TYPE)
@@ -146,6 +151,7 @@ public final class LockScreen {
 			ComponentType.PROP_SHADOW, "true")));
 
 		open.put(player.getUUID(), screen.screenId());
+		shown.remove(player.getUUID());
 		PandoricalApi.screens().open(player, screen.build());
 	}
 
@@ -160,7 +166,7 @@ public final class LockScreen {
 
 		String degrees = String.valueOf(cylinderDegrees(attempt));
 		boolean snapped = attempt.broken > 0;
-		PandoricalApi.screens().update(player, id, List.of(
+		List<ComponentUpdate> parts = List.of(
 			new ComponentUpdate(PICK, Map.of(
 				ComponentType.PROP_ROTATION, degrees,
 				ComponentType.PROP_TEXTURE, snapped ? PICK_BROKEN_SHEET : PICK_SHEET,
@@ -171,16 +177,25 @@ public final class LockScreen {
 				ComponentType.PROP_COLOR, wearColor(attempt))),
 			new ComponentUpdate("picks", Map.of(
 				ComponentType.PROP_TEXT, picks(player),
-				ComponentType.PROP_COLOR, snapped ? SNAPPED_COLOR : COUNT_COLOR))));
+				ComponentType.PROP_COLOR, snapped ? SNAPPED_COLOR : COUNT_COLOR)));
+
+		Map<String, Map<String, String>> last = shown.computeIfAbsent(player.getUUID(), uuid -> new ConcurrentHashMap<>());
+		List<ComponentUpdate> changed = new java.util.ArrayList<>(parts.size());
+		for (ComponentUpdate part : parts) {
+			if (!part.changedProps().equals(last.put(part.componentId(), part.changedProps()))) changed.add(part);
+		}
+		if (!changed.isEmpty()) PandoricalApi.screens().update(player, id, changed);
 	}
 
 	public static void close(ServerPlayer player) {
 		String id = open.remove(player.getUUID());
+		shown.remove(player.getUUID());
 		if (id != null) PandoricalApi.screens().close(player, id);
 	}
 
 	public static void forget(UUID player) {
 		open.remove(player);
+		shown.remove(player);
 	}
 
 	private static String picks(ServerPlayer player) {
