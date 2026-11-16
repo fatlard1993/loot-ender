@@ -1,11 +1,13 @@
 package justfatlard.loot_ender.lock;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import justfatlard.loot_ender.LootEnderItems;
+import justfatlard.pandorical.api.Capabilities;
 import justfatlard.pandorical.api.ComponentBuilder;
 import justfatlard.pandorical.api.ComponentType;
 import justfatlard.pandorical.api.PandoricalApi;
@@ -164,14 +166,22 @@ public final class LockScreen {
 		String id = open.get(player.getUUID());
 		if (id == null) return;
 
-		String degrees = String.valueOf(cylinderDegrees(attempt));
+		// A client that can turn the cylinder itself is told once where a push will stop it and
+		// how fast it gets there; the rest are sent each step. Let go, it springs back blended.
+		Map<String, String> turn = new HashMap<>();
+		if (PandoricalApi.hasCapability(player, Capabilities.DECLARED_MOTION)) {
+			turn.put(ComponentType.PROP_ROTATION, String.valueOf(attempt.holding ? attempt.reach() * FULL_TURN : cylinderDegrees(attempt)));
+			turn.put(ComponentType.PROP_TURN_RATE, String.valueOf(attempt.holding ? Lockpicking.TURN_PER_TICK * FULL_TURN : 0F));
+		} else {
+			turn.put(ComponentType.PROP_ROTATION, String.valueOf(cylinderDegrees(attempt)));
+		}
 		boolean snapped = attempt.broken > 0;
+		Map<String, String> pick = new HashMap<>(turn);
+		pick.put(ComponentType.PROP_TEXTURE, snapped ? PICK_BROKEN_SHEET : PICK_SHEET);
+		pick.put(ComponentType.PROP_SHAKE, String.valueOf(shake(attempt)));
 		List<ComponentUpdate> parts = List.of(
-			new ComponentUpdate(PICK, Map.of(
-				ComponentType.PROP_ROTATION, degrees,
-				ComponentType.PROP_TEXTURE, snapped ? PICK_BROKEN_SHEET : PICK_SHEET,
-				ComponentType.PROP_SHAKE, String.valueOf(shake(attempt)))),
-			new ComponentUpdate("cylinder", Map.of(ComponentType.PROP_ROTATION, degrees)),
+			new ComponentUpdate(PICK, pick),
+			new ComponentUpdate("cylinder", turn),
 			new ComponentUpdate("wear", Map.of(
 				ComponentType.PROP_WIDTH, String.valueOf(wearWidth(attempt)),
 				ComponentType.PROP_COLOR, wearColor(attempt))),

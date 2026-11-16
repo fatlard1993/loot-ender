@@ -9,6 +9,7 @@
 	"entrypoints": {
 		"fabric-client-gametest": [
 			"justfatlard.loot_ender.gametest.LootTravels",
+			"justfatlard.loot_ender.gametest.LockTurns",
 			"justfatlard.loot_ender.gametest.Showcase"
 		]
 	},

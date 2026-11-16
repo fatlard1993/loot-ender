@@ -39,7 +39,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
  *
  * <p>The client owns the pick's motion, so it never waits on the server; the server owns the
  * answer, the cylinder and the pick's wear, so it never leaves the server. The two meet in a
- * handful of small reports a second and the cylinder's angle coming back, which on a bad
+ * handful of small reports a second and where the cylinder is going coming back, which on a bad
  * connection makes the cylinder late rather than the game wrong.
  */
 public final class Lockpicking {
@@ -60,7 +60,7 @@ public final class Lockpicking {
 	 * How far the cylinder turns each tick under the hand, nought to one: half a second all the
 	 * way round. Slow enough that where it stops is watched arriving rather than read off after.
 	 */
-	private static final float TURN_PER_TICK = 0.1F;
+	static final float TURN_PER_TICK = 0.1F;
 	/**
 	 * Ticks a snapped pick lies in two pieces before the hand takes up the next: long enough
 	 * to be seen to have happened. A pick that simply vanished was a number going down.
