@@ -3,6 +3,9 @@
 		"Structure loot is rolled per player, so nobody arrives second. Opening a dungeon chest opens your own copy of it, and the player behind you still gets a first look."
 	],
 	"versions": {
+		"1.1.9": [
+			"A pushed lock pick tells the client once where the cylinder will stop and how fast it turns, instead of sending it a step every tick."
+		],
 		"1.1.8": [
 			"A lock being picked sends only the parts of the screen that changed each tick, not the whole lock over again."
 		],
