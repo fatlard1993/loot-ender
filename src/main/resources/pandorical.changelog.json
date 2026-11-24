@@ -3,6 +3,10 @@
 		"Structure loot is rolled per player, so nobody arrives second. Opening a dungeon chest opens your own copy of it, and the player behind you still gets a first look."
 	],
 	"versions": {
+		"1.1.10": [
+			"Loot chests are spared from explosions through Pandorical's one blast hook, in place of a patch of its own.",
+			"An older Pandorical no longer keeps this out of a server: loot chests are spared from explosions once Pandorical has the blast hook, with a warning until then."
+		],
 		"1.1.9": [
 			"A pushed lock pick tells the client once where the cylinder will stop and how fast it turns, instead of sending it a step every tick."
 		],
