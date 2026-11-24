@@ -21,7 +21,12 @@ public class Main implements ModInitializer {
 		LootKey.register();
 		justfatlard.loot_ender.lock.LockDifficulty.init();
 		LootEnderConfig.load();
-		justfatlard.pandorical.api.PandoricalApi.blasts().protect(LootGuard::spares);
+		// A Pandorical from before the blast hook has no such call, and is left to run without it
+		try {
+			justfatlard.pandorical.api.PandoricalApi.blasts().protect(LootGuard::spares);
+		} catch (LinkageError older) {
+			System.err.println("[loot-ender] Pandorical is older than 15.37.0, so explosions can break loot chests");
+		}
 		if (justfatlard.pandorical.api.PandoricalApi.isAvailable()) LootEnderConfig.menu();
 		LootEnderItems.register();
 
