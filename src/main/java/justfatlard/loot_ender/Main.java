@@ -21,6 +21,7 @@ public class Main implements ModInitializer {
 		LootKey.register();
 		justfatlard.loot_ender.lock.LockDifficulty.init();
 		LootEnderConfig.load();
+		justfatlard.pandorical.api.PandoricalApi.blasts().protect(LootGuard::spares);
 		if (justfatlard.pandorical.api.PandoricalApi.isAvailable()) LootEnderConfig.menu();
 		LootEnderItems.register();
 
